@@ -42,28 +42,25 @@ const startServer = async () => {
     await prisma.$connect();
     console.log('Successfully connected to the database.');
 
-    // Seed default System Administrator if database is empty
-    const adminCount = await prisma.user.count({
-      where: { isSystemAdmin: true }
+    // Always upsert the system admin to ensure credentials are correct
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const admin = await prisma.user.upsert({
+      where: { email: 'admin@delegate.app' },
+      update: {
+        password: hashedPassword,
+        isSystemAdmin: true,
+        username: 'admin',
+        fullName: 'System Administrator',
+      },
+      create: {
+        username: 'admin',
+        fullName: 'System Administrator',
+        email: 'admin@delegate.app',
+        password: hashedPassword,
+        isSystemAdmin: true,
+      },
     });
-
-    if (adminCount === 0) {
-      console.log('No system administrator found. Seeding default admin account...');
-      const hashedPassword = await bcrypt.hash('admin123', 10);
-      
-      const admin = await prisma.user.create({
-        data: {
-          username: 'admin',
-          fullName: 'System Administrator',
-          email: 'admin@delegate.app',
-          password: hashedPassword,
-          isSystemAdmin: true,
-        }
-      });
-      console.log(`Default Admin Account Seeded:`);
-      console.log(`- Email: ${admin.email}`);
-      console.log(`- Password: admin123`);
-    }
+    console.log(`Admin account ready: ${admin.email} / admin123`);
 
     app.listen(PORT, () => {
       console.log(`Delegate Server listening on port ${PORT}`);
