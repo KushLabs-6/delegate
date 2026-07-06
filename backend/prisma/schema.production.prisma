@@ -110,6 +110,7 @@ model Job {
   estimatedTime  String?
   completionDate DateTime?
   notes          String?
+  rate           String?
   attachments    String?
   creatorId      String
   createdAt      DateTime  @default(now())

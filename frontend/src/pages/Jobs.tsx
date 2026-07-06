@@ -26,6 +26,7 @@ interface Job {
   startTime?: string;
   endTime?: string;
   spotsAvailable?: number;
+  rate?: string;
   notes?: string;
   createdAt: string;
   creatorId: string;
@@ -82,6 +83,7 @@ const PostShiftModal: React.FC<PostShiftModalProps> = ({ businessId, onClose, on
     startTime: '',
     endTime: '',
     spotsAvailable: '',
+    rate: '',
     notes: '',
     priority: 'MEDIUM',
   });
@@ -99,6 +101,7 @@ const PostShiftModal: React.FC<PostShiftModalProps> = ({ businessId, onClose, on
       await api.post(`/businesses/${businessId}/jobs`, {
         ...form,
         spotsAvailable: form.spotsAvailable ? parseInt(form.spotsAvailable) : null,
+        rate: form.rate || null,
         startTime: form.startTime || null,
         endTime: form.endTime || null,
       });
@@ -186,7 +189,7 @@ const PostShiftModal: React.FC<PostShiftModalProps> = ({ businessId, onClose, on
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-semibold text-zinc-400 mb-1.5 uppercase tracking-wide">Spots Available</label>
               <input
@@ -195,6 +198,16 @@ const PostShiftModal: React.FC<PostShiftModalProps> = ({ businessId, onClose, on
                 value={form.spotsAvailable}
                 onChange={e => set('spotsAvailable', e.target.value)}
                 placeholder="Unlimited"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-brand transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-zinc-400 mb-1.5 uppercase tracking-wide">Pay Rate</label>
+              <input
+                type="text"
+                value={form.rate}
+                onChange={e => set('rate', e.target.value)}
+                placeholder="e.g. $15/hr"
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-brand transition-colors"
               />
             </div>
@@ -435,8 +448,6 @@ interface MemberShiftCardProps {
 
 const MemberShiftCard: React.FC<MemberShiftCardProps> = ({ job, onRefresh }) => {
   const [loading, setLoading] = useState(false);
-  const [msgInput, setMsgInput] = useState('');
-  const [showMsgInput, setShowMsgInput] = useState(false);
 
   const myStatus = job.mySignup?.status;
   const spotsLeft = job.spotsAvailable ? job.spotsAvailable - job.approvedCount : null;
@@ -445,9 +456,7 @@ const MemberShiftCard: React.FC<MemberShiftCardProps> = ({ job, onRefresh }) => 
   const handleSignup = async () => {
     setLoading(true);
     try {
-      await api.post(`/jobs/${job.id}/signup`, { message: msgInput || null });
-      setShowMsgInput(false);
-      setMsgInput('');
+      await api.post(`/jobs/${job.id}/signup`, { message: null });
       onRefresh();
     } catch (err: any) {
       alert(err.response?.data?.error || 'Failed to sign up');
@@ -510,6 +519,11 @@ const MemberShiftCard: React.FC<MemberShiftCardProps> = ({ job, onRefresh }) => 
               <span>{job.location}</span>
             </div>
           )}
+          {job.rate && (
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-brand bg-brand/10 px-2 py-0.5 rounded-md">{job.rate}</span>
+            </div>
+          )}
           {spotsLeft !== null && (
             <div className="flex items-center gap-1.5">
               <Users size={13} className={isFull ? 'text-red-400' : 'text-brand'} />
@@ -522,42 +536,14 @@ const MemberShiftCard: React.FC<MemberShiftCardProps> = ({ job, onRefresh }) => 
         <div className="mt-4">
           {(!myStatus || myStatus === 'CANCELLED') && !isFull && job.status === 'OPEN' && (
             <div>
-              {showMsgInput ? (
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={msgInput}
-                    onChange={e => setMsgInput(e.target.value)}
-                    placeholder="Add a note (optional)"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-brand text-sm"
-                    autoFocus
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowMsgInput(false)}
-                      className="flex-1 py-2 rounded-xl border border-zinc-700 text-zinc-400 text-sm hover:bg-zinc-800 transition-colors"
-                    >
-                      Back
-                    </button>
-                    <button
-                      id={`confirm-signup-${job.id}`}
-                      onClick={handleSignup}
-                      disabled={loading}
-                      className="flex-1 py-2 rounded-xl bg-brand text-zinc-900 font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 hover:brightness-110 transition-all"
-                    >
-                      {loading ? <Loader2 size={14} className="animate-spin" /> : '✋ I\'m Available!'}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  id={`signup-btn-${job.id}`}
-                  onClick={() => setShowMsgInput(true)}
-                  className="w-full py-2.5 rounded-xl bg-brand text-zinc-900 font-semibold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2"
-                >
-                  ✋ I'm Available
-                </button>
-              )}
+              <button
+                id={`signup-btn-${job.id}`}
+                onClick={handleSignup}
+                disabled={loading}
+                className="w-full py-2.5 rounded-xl bg-brand text-zinc-900 font-semibold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {loading ? <Loader2 size={14} className="animate-spin" /> : "✋ I'm Available"}
+              </button>
             </div>
           )}
           {myStatus === 'PENDING' && (
@@ -705,6 +691,8 @@ const Jobs: React.FC = () => {
 
   useEffect(() => {
     fetchJobs();
+    const interval = setInterval(fetchJobs, 10000);
+    return () => clearInterval(interval);
   }, [fetchJobs]);
 
   if (!currentBusiness) {

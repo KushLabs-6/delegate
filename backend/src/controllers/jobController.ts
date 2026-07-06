@@ -17,7 +17,7 @@ export const createJob = async (req: AuthenticatedRequest, res: Response) => {
     const {
       title, description, priority, location, deadline,
       estimatedTime, notes, attachments,
-      startTime, endTime, spotsAvailable,
+      startTime, endTime, spotsAvailable, rate
     } = req.body;
 
     if (!title) {
@@ -38,6 +38,7 @@ export const createJob = async (req: AuthenticatedRequest, res: Response) => {
         status: 'OPEN',
         estimatedTime,
         notes,
+        rate,
         attachments: attachments ? JSON.stringify(attachments) : null,
         creatorId: req.user.id,
       },
@@ -143,7 +144,7 @@ export const updateJob = async (req: AuthenticatedRequest, res: Response) => {
     const { jobId } = req.params;
     const {
       title, description, priority, location, deadline, status,
-      estimatedTime, notes, attachments, startTime, endTime, spotsAvailable,
+      estimatedTime, notes, attachments, startTime, endTime, spotsAvailable, rate
     } = req.body;
 
     const job = await prisma.job.findUnique({ where: { id: jobId } });
@@ -163,6 +164,7 @@ export const updateJob = async (req: AuthenticatedRequest, res: Response) => {
         status,
         estimatedTime,
         notes,
+        rate,
         attachments: attachments ? JSON.stringify(attachments) : undefined,
         completionDate: status === 'COMPLETED' ? new Date() : undefined,
       },

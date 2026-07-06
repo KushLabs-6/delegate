@@ -177,7 +177,30 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const fetchUnreadCount = useCallback(async () => {
     try {
       const res = await api.get('/notifications');
-      setUnreadCount(res.data.filter((n: any) => !n.isRead).length);
+      const newCount = res.data.filter((n: any) => !n.isRead).length;
+      setUnreadCount(prev => {
+        if (newCount > prev && prev !== 0) {
+          try {
+            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioContext) {
+              const ctx = new AudioContext();
+              const osc = ctx.createOscillator();
+              const gainNode = ctx.createGain();
+              osc.connect(gainNode);
+              gainNode.connect(ctx.destination);
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(880, ctx.currentTime);
+              osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1);
+              gainNode.gain.setValueAtTime(0, ctx.currentTime);
+              gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+              gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+              osc.start(ctx.currentTime);
+              osc.stop(ctx.currentTime + 0.5);
+            }
+          } catch (e) {}
+        }
+        return newCount;
+      });
     } catch { /* silent */ }
   }, []);
 
