@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-const rawUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const API_URL = (rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`) + '/api';
+const rawUrl = import.meta.env.VITE_API_URL;
+// If VITE_API_URL is exactly "/api", or undefined (in which case we use /api for same-domain prod, or localhost for dev)
+const isDev = import.meta.env.DEV;
+const API_URL = rawUrl ? rawUrl : (isDev ? 'http://localhost:5000/api' : '/api');
 
 const api = axios.create({
   baseURL: API_URL,

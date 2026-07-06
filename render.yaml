@@ -1,16 +1,12 @@
 services:
-  # Backend Express API Service
+  # Unified Delegate App
   - type: web
-    name: delegate-backend
+    name: delegate-app
     env: node
-    rootDir: backend
+    rootDir: .
     buildCommand: |
-      cp prisma/schema.production.prisma prisma/schema.prisma &&
-      npm install --include=dev &&
-      npx prisma generate &&
-      npx prisma db push --accept-data-loss &&
-      npm run build
-    startCommand: npm start
+      cd frontend && npm install && npm run build && cd ../backend && cp prisma/schema.production.prisma prisma/schema.prisma && npm install --include=dev && npx prisma generate && npx prisma db push --accept-data-loss && npm run build
+    startCommand: cd backend && npm start
     plan: free
     envVars:
       - key: DATABASE_URL
@@ -23,28 +19,6 @@ services:
         value: production
       - key: PORT
         value: 10000
-
-  # Frontend Vite Static Website Service
-  - type: web
-    name: delegate-frontend
-    env: static
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: public, max-age=0, must-revalidate
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_API_URL
-        fromService:
-          name: delegate-backend
-          type: web
-          property: host
 
 databases:
   - name: delegate-db
