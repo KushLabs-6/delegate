@@ -30,10 +30,9 @@ app.use('/uploads', express.static(uploadsDir));
 // API Routes
 app.use('/api', apiRouter);
 
-// Root/Health Check Route
-app.get('/', (req, res) => {
-  res.json({ message: 'Delegate API is running', env: process.env.NODE_ENV });
-});
+// Serve Frontend Statically
+const frontendDistPath = path.resolve('../frontend/dist');
+app.use(express.static(frontendDistPath));
 
 // Temporary admin-reset endpoint — force resets admin password in the live DB
 app.post('/admin-init', async (req, res) => {
@@ -48,6 +47,11 @@ app.post('/admin-init', async (req, res) => {
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// Fallback for React Router (Single Page Application)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 
 // Start Database Seeding and Express Server
