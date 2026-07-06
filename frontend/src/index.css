@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  
+  html {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+
+  body {
+    background-color: #09090b;
+    color: #f4f4f5;
+  }
+}
+
+/* Glassmorphism Styles */
+.glass-panel {
+  background: rgba(24, 24, 27, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(63, 63, 70, 0.4);
+}
+
+.glass-panel-yellow {
+  background: rgba(24, 24, 27, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(250, 204, 21, 0.15);
+}
+
+.glass-panel-yellow-active {
+  border-color: rgba(250, 204, 21, 0.4);
+  box-shadow: 0 0 15px rgba(250, 204, 21, 0.1);
+}
+
+/* Hide Scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Pulsing glow animation */
+@keyframes neonPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.15);
+    border-color: rgba(250, 204, 21, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(250, 204, 21, 0.35);
+    border-color: rgba(250, 204, 21, 0.5);
+  }
+}
+
+.neon-glow {
+  animation: neonPulse 3s infinite;
+}
+
+/* Bottom Bar Navigation Safe Area padding for iOS devices */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-area-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px);
+}
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Smooth scrolling */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid #FACC15;
+  outline-offset: 2px;
+}
+
+/* Card transitions */
+.card-hover {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
