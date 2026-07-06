@@ -272,3 +272,32 @@ export const notifySignupRejected = async (job: NotifyJob, member: NotifyUser) =
     );
   }
 };
+
+// When a user registers → send welcome confirmation email
+export const notifyWelcome = async (user: { fullName: string; email: string; username: string }) => {
+  const appLink = `${process.env.CLIENT_URL || 'http://localhost:5173'}/login`;
+
+  await sendEmail(
+    user.email,
+    `Welcome to Delegate, ${user.fullName}! 🎉`,
+    emailTemplate(
+      `Welcome to Delegate! 🎉`,
+      `<p>Hey <strong style="color:#fff">${user.fullName}</strong>,</p>
+      <p>Your account has been created successfully. You're all set to start coordinating with your team!</p>
+      <div class="info-box">
+        <p><strong>Username:</strong> @${user.username}</p>
+        <p><strong>Email:</strong> ${user.email}</p>
+      </div>
+      <p>Here's what you can do next:</p>
+      <p style="color:#d4d4d8; font-size:13px; line-height:1.8;">
+        ✅ Create or join a team<br>
+        📋 Browse and sign up for shifts<br>
+        💬 Chat with your team members<br>
+        📅 Track your schedule
+      </p>
+      <p>Log in now to get started!</p>`,
+      'Open Delegate',
+      appLink
+    )
+  );
+};

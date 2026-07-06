@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/db.js';
 import { AuthenticatedRequest } from '../middleware/auth.js';
+import { notifyWelcome } from '../services/notificationService.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'local-development-secret-key-12345';
 
@@ -56,6 +57,9 @@ export const register = async (req: AuthenticatedRequest, res: Response) => {
         details: `User ${user.username} registered.`,
       },
     });
+
+    // Send welcome confirmation email (fire-and-forget)
+    notifyWelcome({ fullName: user.fullName, email: user.email, username: user.username }).catch(() => {});
 
     res.status(201).json({
       token,
