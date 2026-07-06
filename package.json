@@ -2,14 +2,8 @@
   "name": "delegate-root",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "frontend",
-    "backend"
-  ],
   "scripts": {
-    "build:frontend": "npm run build --workspace=frontend",
-    "build:backend": "cd backend && node -e \"const fs = require('fs'); fs.copyFileSync('prisma/schema.production.prisma', 'prisma/schema.prisma');\" && npx prisma generate && npm run build",
-    "build": "npm run build:frontend && npm run build:backend",
-    "start": "cd backend && npx prisma db push --accept-data-loss && npm start"
+    "build": "cd frontend && npm install && npm run build && cd ../backend && npm install --include=dev && node -e \"require('fs').copyFileSync('prisma/schema.production.prisma','prisma/schema.prisma')\" && npx prisma generate && npm run build",
+    "start": "cd backend && npx prisma db push --accept-data-loss && node dist/index.js"
   }
 }

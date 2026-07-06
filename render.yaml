@@ -1,11 +1,10 @@
 services:
-  # Unified Delegate App
   - type: web
     name: delegateapp
     env: node
     rootDir: .
-    buildCommand: npm run build
-    startCommand: npm start
+    buildCommand: "cd frontend && npm install && npm run build && cd ../backend && npm install --include=dev && cp prisma/schema.production.prisma prisma/schema.prisma && npx prisma generate && npm run build"
+    startCommand: "cd backend && npx prisma db push --accept-data-loss && node dist/index.js"
     plan: free
     envVars:
       - key: NODE_VERSION
