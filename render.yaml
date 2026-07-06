@@ -3,9 +3,8 @@ services:
   - type: web
     name: delegateapp
     env: node
-    rootDir: backend
-    buildCommand: |
-      cd ../frontend && npm install && npm run build && cd ../backend && cp prisma/schema.production.prisma prisma/schema.prisma && npm install --include=dev && npx prisma generate && npx prisma db push --accept-data-loss && npm run build
+    rootDir: .
+    buildCommand: npm run build
     startCommand: npm start
     plan: free
     envVars:
