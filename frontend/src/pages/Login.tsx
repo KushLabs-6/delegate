@@ -202,7 +202,7 @@ const Login: React.FC = () => {
             <p>Seeded accounts are ready for testing. Login with:</p>
             <div className="font-mono text-zinc-200 mt-1 select-all bg-dark-950 px-3 py-1.5 rounded-inner border border-zinc-800">
               User: <span className="text-brand">admin@delegate.app</span> <br/>
-              Pass: <span className="text-brand">Password123</span>
+              Pass: <span className="text-brand">admin123</span>
             </div>
           </div>
         )}

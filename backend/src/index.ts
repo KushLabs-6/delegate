@@ -49,7 +49,7 @@ const startServer = async () => {
 
     if (adminCount === 0) {
       console.log('No system administrator found. Seeding default admin account...');
-      const hashedPassword = await bcrypt.hash('Password123', 10);
+      const hashedPassword = await bcrypt.hash('admin123', 10);
       
       const admin = await prisma.user.create({
         data: {
@@ -62,7 +62,7 @@ const startServer = async () => {
       });
       console.log(`Default Admin Account Seeded:`);
       console.log(`- Email: ${admin.email}`);
-      console.log(`- Password: Password123`);
+      console.log(`- Password: admin123`);
     }
 
     app.listen(PORT, () => {

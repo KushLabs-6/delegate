@@ -4,7 +4,7 @@
   "description": "API backend for Delegate Scheduling App",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc && prisma generate",
+    "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "postinstall": "prisma generate"

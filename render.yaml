@@ -5,9 +5,12 @@ services:
     env: node
     rootDir: backend
     buildCommand: |
-      sed -i 's/provider = "sqlite"/provider = "postgresql"/g' prisma/schema.prisma
-      npm install --include=dev && npm run build
-    startCommand: npx prisma db push && npm start
+      cp prisma/schema.production.prisma prisma/schema.prisma &&
+      npm install --include=dev &&
+      npx prisma generate &&
+      npx prisma db push --accept-data-loss &&
+      npm run build
+    startCommand: npm start
     plan: free
     envVars:
       - key: DATABASE_URL
