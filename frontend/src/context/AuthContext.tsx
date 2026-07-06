@@ -11,12 +11,29 @@ interface User {
   isSystemAdmin: boolean;
 }
 
+interface BusinessMember {
+  id: string;
+  userId: string;
+  role: string;
+  user: {
+    id: string;
+    username: string;
+    fullName: string;
+    email: string;
+    phone?: string;
+    profileImage?: string;
+  };
+}
+
 interface Business {
   id: string;
   name: string;
   description?: string;
   logo?: string;
   userRole: string;
+  ownerId: string;
+  createdAt: string;
+  members: BusinessMember[];
 }
 
 interface AuthContextType {
