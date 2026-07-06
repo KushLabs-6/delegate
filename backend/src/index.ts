@@ -35,6 +35,21 @@ app.get('/', (req, res) => {
   res.json({ message: 'Delegate API is running', env: process.env.NODE_ENV });
 });
 
+// Temporary admin-reset endpoint — force resets admin password in the live DB
+app.post('/admin-init', async (req, res) => {
+  try {
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const admin = await (prisma as any).user.upsert({
+      where: { email: 'admin@delegate.app' },
+      update: { password: hashedPassword, isSystemAdmin: true, username: 'admin', fullName: 'System Administrator' },
+      create: { username: 'admin', fullName: 'System Administrator', email: 'admin@delegate.app', password: hashedPassword, isSystemAdmin: true },
+    });
+    res.json({ ok: true, email: admin.email, message: 'Admin password reset to admin123' });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Start Database Seeding and Express Server
 const startServer = async () => {
   try {
