@@ -1,7 +1,7 @@
 services:
   # Unified Delegate App
   - type: web
-    name: delegate
+    name: delegateapp
     env: node
     rootDir: backend
     buildCommand: |
