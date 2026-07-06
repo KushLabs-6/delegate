@@ -4,7 +4,9 @@ services:
     name: delegate-backend
     env: node
     rootDir: backend
-    buildCommand: npm install && npx prisma generate
+    buildCommand: |
+      sed -i 's/provider = "sqlite"/provider = "postgresql"/g' prisma/schema.prisma
+      npm install && npx prisma generate
     startCommand: npx prisma db push && npm start
     plan: free
     envVars:
