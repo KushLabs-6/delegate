@@ -5,7 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { 
   Building2, PlusCircle, CheckCircle, Shield, Link, 
   UserPlus, Clipboard, Check, Trash2, Calendar, 
-  ListTodo, Clock, MapPin, Users, Loader2, Star
+  ListTodo, Clock, MapPin, Users, Loader2
 } from 'lucide-react';
 
 const Businesses: React.FC = () => {
@@ -538,7 +538,6 @@ const Businesses: React.FC = () => {
               </div>
               <div className="divide-y divide-zinc-800 border border-zinc-800 rounded-xl overflow-hidden bg-zinc-900/20">
                 {currentBusiness.members?.map((member) => {
-                  const isSelf = member.userId === api.defaults.headers.common['Authorization']?.toString(); // fallback
                   const isOwner = member.role === 'OWNER';
                   const currentRole = currentBusiness.userRole;
                   const canManage = (currentRole === 'OWNER' || currentRole === 'ADMIN') && !isOwner;
@@ -920,7 +919,7 @@ const Businesses: React.FC = () => {
                   className="w-full bg-dark-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-brand"
                 >
                   <option value="">-- Select Member --</option>
-                  {currentBusiness.members?.map(m => (
+                  {currentBusiness?.members?.map(m => (
                     <option key={m.userId} value={m.userId}>{m.user.fullName} (@{m.user.username})</option>
                   ))}
                 </select>
