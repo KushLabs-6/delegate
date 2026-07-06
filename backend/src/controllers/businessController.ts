@@ -21,6 +21,7 @@ export const createBusiness = async (req: AuthenticatedRequest, res: Response) =
         address,
         website,
         phone,
+        inviteCode: crypto.randomBytes(3).toString('hex').toUpperCase(),
         ownerId: req.user.id,
       },
     });
@@ -574,6 +575,61 @@ export const getInviteQRCode = async (req: AuthenticatedRequest, res: Response) 
 
     const qrCodeDataUrl = await QRCode.toDataURL(joinUrl);
     res.json({ qrCodeDataUrl, joinUrl });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Join Business by ID or Invite Code
+export const joinBusinessByCode = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    const { codeOrId } = req.body;
+
+    if (!codeOrId) {
+      return res.status(400).json({ error: 'Invite code or ID is required' });
+    }
+
+    const business = await prisma.business.findFirst({
+      where: {
+        OR: [
+          { id: codeOrId },
+          { inviteCode: codeOrId }
+        ]
+      }
+    });
+
+    if (!business) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+
+    // Check if user is already a member
+    const existing = await prisma.businessMember.findUnique({
+      where: {
+        userId_businessId: {
+          userId: req.user.id,
+          businessId: business.id,
+        },
+      },
+    });
+
+    if (existing) {
+      return res.status(400).json({ error: 'You are already a member of this team' });
+    }
+
+    const membership = await prisma.businessMember.create({
+      data: {
+        userId: req.user.id,
+        businessId: business.id,
+        role: 'EMPLOYEE',
+      },
+    });
+
+    res.status(201).json({
+      message: 'Successfully joined team',
+      business,
+      membership,
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

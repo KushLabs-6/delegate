@@ -30,6 +30,7 @@ interface Business {
   name: string;
   description?: string;
   logo?: string;
+  inviteCode?: string;
   userRole: string;
   ownerId: string;
   createdAt: string;

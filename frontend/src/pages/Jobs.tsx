@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   Plus, MapPin, Clock, Users, ChevronDown, ChevronUp,
   CheckCircle, XCircle, Loader2, Calendar, AlertCircle,
-  Briefcase, ClipboardList, Star, X, MessageSquare,
+  Briefcase, ClipboardList, Star, X, MessageSquare, Trash2,
 } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -270,6 +270,20 @@ interface OwnerShiftCardProps {
 const OwnerShiftCard: React.FC<OwnerShiftCardProps> = ({ job, onRefresh }) => {
   const [expanded, setExpanded] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleDeleteJob = async () => {
+    if (!confirm(`Are you sure you want to delete the shift "${job.title}"? This cannot be undone.`)) return;
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/jobs/${job.id}`);
+      onRefresh();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to delete shift');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   const handleApprove = async (signupId: string) => {
     setActionLoading(signupId + '-approve');
@@ -322,6 +336,14 @@ const OwnerShiftCard: React.FC<OwnerShiftCardProps> = ({ job, onRefresh }) => {
               <p className="text-zinc-400 text-sm mt-1 line-clamp-2">{job.description}</p>
             )}
           </div>
+          <button
+            onClick={handleDeleteJob}
+            disabled={deleteLoading}
+            className="p-2 rounded-lg hover:bg-red-950/40 text-zinc-500 hover:text-red-400 transition-colors shrink-0 disabled:opacity-50"
+            title="Delete Shift"
+          >
+            {deleteLoading ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+          </button>
         </div>
 
         {/* Meta info */}

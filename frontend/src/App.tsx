@@ -181,6 +181,10 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       setUnreadCount(prev => {
         if (newCount > prev && prev !== 0) {
           try {
+            // Vibrate on mobile devices
+            if (navigator.vibrate) {
+              navigator.vibrate([200, 100, 200]);
+            }
             const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
             if (AudioContext) {
               const ctx = new AudioContext();

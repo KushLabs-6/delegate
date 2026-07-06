@@ -108,8 +108,8 @@ const Businesses: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await api.post('/groups/join', { inviteCode });
-      setJoinSuccess(`Successfully joined team group! ${res.data.group.name}`);
+      const res = await api.post('/businesses/join', { codeOrId: inviteCode });
+      setJoinSuccess(`Successfully joined team! ${res.data.business.name}`);
       setInviteCode('');
       await fetchBusinesses();
     } catch (err: any) {
@@ -396,7 +396,7 @@ const Businesses: React.FC = () => {
           <div className="glass-panel rounded-card p-5">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-1.5">
               <Link className="h-4 w-4 text-brand" />
-              Join Group/Team
+              Join Team
             </h3>
             
             {joinError && <p className="text-xs text-red-400 bg-red-950/40 border border-red-500/20 p-2.5 rounded-inner mb-3">{joinError}</p>}
@@ -419,7 +419,7 @@ const Businesses: React.FC = () => {
                 disabled={loading}
                 className="w-full py-2.5 rounded-inner bg-brand text-dark-900 font-bold hover:bg-brand-glow text-xs"
               >
-                Join Team Group
+                Join Team
               </button>
             </form>
           </div>
@@ -478,8 +478,13 @@ const Businesses: React.FC = () => {
               <p className="text-zinc-500 text-[10px] mb-4">Anyone can scan this to join your team</p>
               
               <div className="bg-white p-3.5 rounded-card shadow-inner mb-4">
-                <QRCodeSVG value={`http://localhost:5173/join/${currentBusiness.id}`} size={120} />
+                <QRCodeSVG value={`http://localhost:5173/join/${currentBusiness.inviteCode || currentBusiness.id}`} size={120} />
               </div>
+              {currentBusiness.inviteCode && (
+                <p className="text-sm font-mono tracking-widest text-brand mb-4 bg-brand/10 px-3 py-1.5 rounded-md border border-brand/20">
+                  {currentBusiness.inviteCode}
+                </p>
+              )}
 
               <div className="flex gap-2 w-full">
                 <button
@@ -624,9 +629,28 @@ const Businesses: React.FC = () => {
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand/10 text-brand border border-brand/20 uppercase">
                             {job.priority}
                           </span>
-                          <span className="text-zinc-500 text-[10px]">
-                            {job.status}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-zinc-500 text-[10px]">
+                              {job.status}
+                            </span>
+                            {isManager && (
+                              <button
+                                onClick={async () => {
+                                  if (!confirm(`Delete "${job.title}"? This cannot be undone.`)) return;
+                                  try {
+                                    await api.delete(`/jobs/${job.id}`);
+                                    fetchTeamData();
+                                  } catch (err: any) {
+                                    alert(err.response?.data?.error || 'Failed to delete');
+                                  }
+                                }}
+                                className="p-1 rounded hover:bg-red-950/40 text-zinc-500 hover:text-red-400 transition-colors"
+                                title="Delete Job"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            )}
+                          </div>
                         </div>
                         <h5 className="font-bold text-white text-sm">{job.title}</h5>
                         {job.description && (

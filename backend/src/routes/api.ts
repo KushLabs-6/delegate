@@ -28,7 +28,8 @@ import {
   getGroupDetails,
   joinGroupByCode,
   leaveGroup,
-  getInviteQRCode
+  getInviteQRCode,
+  joinBusinessByCode
 } from '../controllers/businessController.js';
 import {
   createJob,
@@ -109,6 +110,7 @@ router.get('/businesses', authenticateToken, getBusinesses);
 router.get('/businesses/:businessId', authenticateToken, requireRole(['OWNER', 'ADMIN', 'MANAGER', 'SUPERVISOR', 'EMPLOYEE', 'GUEST']), getBusinessDetails);
 router.put('/businesses/:businessId', authenticateToken, requireRole(['OWNER', 'ADMIN']), updateBusiness);
 router.delete('/businesses/:businessId', authenticateToken, requireRole(['OWNER']), deleteBusiness);
+router.post('/businesses/join', authenticateToken, joinBusinessByCode);
 
 // Business Member Invites/Roles
 router.post('/businesses/:businessId/invite', authenticateToken, requireRole(['OWNER', 'ADMIN', 'MANAGER']), inviteMember);
