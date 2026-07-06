@@ -44,6 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (currentToken: string) => {
     try {
+      if (!currentToken) return;
       const response = await api.get('/auth/profile');
       setUser(response.data);
       await fetchBusinesses();

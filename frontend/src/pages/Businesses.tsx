@@ -3,12 +3,12 @@ import { useAuth } from '../context/AuthContext.js';
 import api from '../services/api.js';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
-  Building2, PlusCircle, CheckCircle, Shield, Link, QRCode as QRVal, 
-  MapPin, Globe, Phone, Mail, UserPlus, Clipboard, Check
+  Building2, PlusCircle, CheckCircle, Shield, Link, 
+  UserPlus, Clipboard, Check
 } from 'lucide-react';
 
 const Businesses: React.FC = () => {
-  const { businesses, currentBusiness, selectBusiness, fetchBusinesses, user } = useAuth();
+  const { businesses, currentBusiness, selectBusiness, fetchBusinesses } = useAuth();
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -23,7 +23,7 @@ const Businesses: React.FC = () => {
   const [joinSuccess, setJoinSuccess] = useState('');
   
   const [copiedLink, setCopiedLink] = useState('');
-  const [showQR, setShowQR] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(false);
 
   const handleCreate = async (e: React.FormEvent) => {

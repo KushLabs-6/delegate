@@ -682,7 +682,7 @@ const Jobs: React.FC = () => {
   const [showPostModal, setShowPostModal] = useState(false);
 
   // Role detection
-  const myMembership = currentBusiness?.members?.find((m: any) => m.userId === user?.id);
+  const myMembership = (currentBusiness as any)?.members?.find((m: any) => m.userId === user?.id);
   const myRole = myMembership?.role ?? currentBusiness?.userRole ?? 'EMPLOYEE';
   const isManager = ['OWNER', 'ADMIN', 'MANAGER'].includes(myRole);
 

@@ -192,7 +192,7 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     navigate('/login');
   };
 
-  const currentPageTitle = navItems.find((n) => location.pathname.startsWith(n.path))?.label ?? 'Delegate';
+
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-950 text-white">

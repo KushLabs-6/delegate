@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext.js';
 import api from '../services/api.js';
 import { 
   User, Shield, Phone, Mail, Key, ShieldAlert, Check,
-  Camera, Trash2, ArrowUpRight, LogOut, CheckSquare
+  Camera, Trash2, LogOut
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

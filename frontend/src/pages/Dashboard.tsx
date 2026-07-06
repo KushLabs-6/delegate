@@ -3,8 +3,8 @@ import { useAuth } from '../context/AuthContext.js';
 import api from '../services/api.js';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { 
-  Users, CheckSquare, Calendar, ChevronRight, Bell, 
-  PlusCircle, UserPlus, FileText, ClipboardList, Activity, ArrowUpRight,
+  Users, CheckSquare, Calendar, ChevronRight, 
+  PlusCircle, UserPlus, ClipboardList, Activity, ArrowUpRight,
   Clock, MapPin, AlertTriangle
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';

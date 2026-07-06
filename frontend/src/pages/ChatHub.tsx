@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext.js';
 import api from '../services/api.js';
 import { 
-  MessageSquare, User, Send, Paperclip, Pin, Smile,
-  PlusCircle, Users, ArrowLeft, ShieldAlert, Check, CheckCheck, Loader2
+  MessageSquare, User, Send, Paperclip, 
+  PlusCircle, Users, ArrowLeft, Loader2
 } from 'lucide-react';
 
 interface Group {
@@ -39,7 +39,6 @@ const ChatHub: React.FC = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Active Chats
   const [activeType, setActiveType] = useState<'group' | 'private' | null>(null);
@@ -71,14 +70,11 @@ const ChatHub: React.FC = () => {
       setMembers(membersRes.data.members || []);
     } catch (err) {
       console.error('Error fetching chat data', err);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
     if (currentBusiness) {
-      setLoading(true);
       fetchChatMetadata();
     }
     return () => stopPolling();
@@ -168,7 +164,7 @@ const ChatHub: React.FC = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      const { fileUrl, fileName, mimeType } = uploadRes.data;
+      const { fileUrl, mimeType } = uploadRes.data;
       const isImg = mimeType.startsWith('image/');
       
       const payload = {
