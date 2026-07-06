@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -102,10 +102,10 @@ model Job {
   description    String?
   priority       String    @default("MEDIUM") // "LOW", "MEDIUM", "HIGH", "URGENT"
   location       String?
-  startTime      DateTime?  // shift start date+time
-  endTime        DateTime?  // shift end date+time
+  startTime      DateTime?
+  endTime        DateTime?
   deadline       DateTime?
-  spotsAvailable Int?       // null = unlimited spots
+  spotsAvailable Int?
   status         String    @default("OPEN") // "OPEN", "FULL", "CLOSED", "CANCELLED", "COMPLETED"
   estimatedTime  String?
   completionDate DateTime?
@@ -121,13 +121,12 @@ model Job {
   signups     JobSignup[]
 }
 
-// Shift sign-up requests from team members
 model JobSignup {
   id          String    @id @default(uuid())
   jobId       String
   userId      String
-  status      String    @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED"
-  message     String?   // optional note from the member when requesting
+  status      String    @default("PENDING")
+  message     String?
   reviewedAt  DateTime?
   createdAt   DateTime  @default(now())
 
