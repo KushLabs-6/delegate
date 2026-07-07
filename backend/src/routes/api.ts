@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import prisma from '../config/db.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -129,8 +130,26 @@ router.get('/groups/qr/:inviteCode', getInviteQRCode);
 router.post('/businesses/:businessId/jobs', authenticateToken, requireRole(['OWNER', 'ADMIN', 'MANAGER']), createJob);
 router.get('/businesses/:businessId/jobs', authenticateToken, requireRole(['OWNER', 'ADMIN', 'MANAGER', 'SUPERVISOR', 'EMPLOYEE', 'GUEST']), getJobs);
 router.get('/jobs/:jobId', authenticateToken, getJobDetails);
-router.put('/jobs/:jobId', authenticateToken, updateJob);
-router.delete('/jobs/:jobId', authenticateToken, deleteJob);
+router.put('/jobs/:jobId', authenticateToken, async (req, res, next) => {
+  try {
+    const job = await prisma.job.findUnique({ where: { id: req.params.jobId } });
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    req.body.businessId = job.businessId; // inject businessId context for requireRole
+    next();
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+}, requireRole(['OWNER', 'ADMIN', 'MANAGER']), updateJob);
+router.delete('/jobs/:jobId', authenticateToken, async (req, res, next) => {
+  try {
+    const job = await prisma.job.findUnique({ where: { id: req.params.jobId } });
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    req.body.businessId = job.businessId; // inject businessId context for requireRole
+    next();
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+}, requireRole(['OWNER', 'ADMIN', 'MANAGER']), deleteJob);
 
 // ==================== SHIFT SIGNUPS ====================
 router.post('/jobs/:jobId/signup', authenticateToken, signupForJob);
