@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext.js';
 import api from '../services/api.js';
 import { QRCodeSVG } from 'qrcode.react';
+import { Scanner } from '@yudiel/react-qr-scanner';
 import { 
   Building2, PlusCircle, CheckCircle, Shield, Link, 
   UserPlus, Clipboard, Check, Trash2, Calendar, 
-  ListTodo, Clock, MapPin, Users, Loader2
+  ListTodo, Clock, MapPin, Users, Loader2, Camera, Keyboard, QrCode
 } from 'lucide-react';
 
 const Businesses: React.FC = () => {
@@ -18,6 +19,7 @@ const Businesses: React.FC = () => {
   const [phone, setPhone] = useState('');
   
   const [inviteCode, setInviteCode] = useState('');
+  const [joinMode, setJoinMode] = useState<'type' | 'scan'>('type');
   const [inviteRole, setInviteRole] = useState('EMPLOYEE');
   const [inviteEmail, setInviteEmail] = useState('');
   const [joinError, setJoinError] = useState('');
@@ -116,6 +118,28 @@ const Businesses: React.FC = () => {
       setJoinError(err.response?.data?.error || 'Invalid or expired invite code');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleScan = async (result: any) => {
+    if (result && result.length > 0 && result[0].rawValue) {
+      const code = result[0].rawValue;
+      setInviteCode(code);
+      setJoinMode('type');
+      
+      setJoinError('');
+      setJoinSuccess('');
+      setLoading(true);
+      try {
+        const res = await api.post('/businesses/join', { codeOrId: code });
+        setJoinSuccess(`Successfully joined team! ${res.data.business.name}`);
+        setInviteCode('');
+        await fetchBusinesses();
+      } catch (err: any) {
+        setJoinError(err.response?.data?.error || 'Invalid or expired invite code');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -393,35 +417,84 @@ const Businesses: React.FC = () => {
         {/* Join/Invite Panel */}
         <div className="space-y-6">
           {/* Join Form */}
-          <div className="glass-panel rounded-card p-5">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-1.5">
-              <Link className="h-4 w-4 text-brand" />
+          <div className="glass-panel rounded-card p-5 relative overflow-hidden">
+            {/* Background Accent */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-brand/5 rounded-full blur-2xl pointer-events-none"></div>
+            
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-5 flex items-center gap-2 relative z-10">
+              <div className="bg-brand/10 p-1.5 rounded-lg border border-brand/20">
+                <Link className="h-4 w-4 text-brand" />
+              </div>
               Join Team
             </h3>
             
-            {joinError && <p className="text-xs text-red-400 bg-red-950/40 border border-red-500/20 p-2.5 rounded-inner mb-3">{joinError}</p>}
-            {joinSuccess && <p className="text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 p-2.5 rounded-inner mb-3">{joinSuccess}</p>}
+            {joinError && <p className="text-xs text-red-400 bg-red-950/40 border border-red-500/20 p-2.5 rounded-inner mb-4 flex items-center gap-2 relative z-10"><span className="h-1.5 w-1.5 rounded-full bg-red-500 flex-shrink-0"></span>{joinError}</p>}
+            {joinSuccess && <p className="text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 p-2.5 rounded-inner mb-4 flex items-center gap-2 relative z-10"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500 flex-shrink-0"></span>{joinSuccess}</p>}
 
-            <form onSubmit={handleJoin} className="space-y-3.5">
-              <div>
-                <label className="block text-zinc-400 text-[10px] font-semibold uppercase mb-1">Invite/Scan Code</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. 5f7d2a"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value)}
-                  className="w-full bg-dark-900 border border-zinc-800 rounded-inner py-2 px-3 text-white placeholder-zinc-700 text-sm focus:outline-none focus:border-brand font-mono text-center uppercase tracking-widest"
-                />
-              </div>
+            <div className="bg-dark-900 border border-zinc-800 rounded-inner p-1 flex gap-1 mb-5 relative z-10">
               <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-2.5 rounded-inner bg-brand text-dark-900 font-bold hover:bg-brand-glow text-xs"
+                type="button"
+                onClick={() => setJoinMode('type')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-inner text-xs font-bold transition-all ${
+                  joinMode === 'type' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
+                }`}
               >
-                Join Team
+                <Keyboard className="h-3.5 w-3.5" />
+                Type Code
               </button>
-            </form>
+              <button
+                type="button"
+                onClick={() => setJoinMode('scan')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-inner text-xs font-bold transition-all ${
+                  joinMode === 'scan' ? 'bg-zinc-800 text-brand shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                <Camera className="h-3.5 w-3.5" />
+                Scan QR
+              </button>
+            </div>
+
+            {joinMode === 'type' ? (
+              <form onSubmit={handleJoin} className="space-y-4 relative z-10">
+                <div>
+                  <div className="relative">
+                    <QrCode className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
+                    <input
+                      type="text"
+                      required
+                      placeholder="Enter invite code (e.g. 5F7D2A)"
+                      value={inviteCode}
+                      onChange={(e) => setInviteCode(e.target.value)}
+                      className="w-full bg-dark-900/50 border border-zinc-800 rounded-inner py-2.5 pl-10 pr-3 text-white placeholder-zinc-700 text-sm focus:outline-none focus:border-brand font-mono uppercase tracking-widest transition-all"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading || !inviteCode.trim()}
+                  className="w-full py-2.5 rounded-inner bg-brand text-dark-900 font-bold hover:bg-brand-glow hover:shadow-[0_0_15px_rgba(255,191,0,0.3)] transition-all text-xs flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Join Team'}
+                </button>
+              </form>
+            ) : (
+              <div className="space-y-3 relative z-10">
+                <div className="aspect-square w-full max-w-[240px] mx-auto rounded-xl overflow-hidden border border-zinc-800 bg-black relative shadow-inner">
+                  <Scanner 
+                    onScan={handleScan}
+                    styles={{ container: { width: '100%', height: '100%' } }}
+                  />
+                  {loading && (
+                    <div className="absolute inset-0 bg-black/80 flex items-center justify-center backdrop-blur-sm z-10">
+                      <Loader2 className="h-6 w-6 text-brand animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-[10px] text-zinc-500 text-center uppercase tracking-wider font-semibold">
+                  Point your camera at a Team QR Code
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Invite Members Form (Only for Owner/Admin/Manager) */}
