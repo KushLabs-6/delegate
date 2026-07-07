@@ -50,7 +50,10 @@ export const sendInAppNotification = async (
 
 // ─── Email Notification ───────────────────────────────────────────────────────
 export const sendEmail = async (to: string, subject: string, html: string) => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+  const user = process.env.EMAIL_USER || 'delegatetheapp@gmail.com';
+  const pass = process.env.EMAIL_PASS || 'demiannaja876';
+
+  if (!user || !pass) {
     console.log(`[Email] Not configured — skipping email to ${to}`);
     return;
   }
@@ -58,12 +61,12 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user,
+        pass,
       },
     });
     await transporter.sendMail({
-      from: `"Delegate App" <${process.env.EMAIL_USER}>`,
+      from: `"Delegate App" <${user}>`,
       to,
       subject,
       html,
