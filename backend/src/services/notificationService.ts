@@ -114,9 +114,10 @@ const emailTemplate = (title: string, body: string, ctaText?: string, ctaLink?: 
   <style>
     body { font-family: 'Inter', Arial, sans-serif; background: #09090b; color: #f4f4f5; margin: 0; padding: 0; }
     .container { max-width: 560px; margin: 40px auto; background: #18181b; border-radius: 16px; overflow: hidden; border: 1px solid #27272a; }
-    .header { background: #FACC15; padding: 24px 32px; }
-    .header h1 { margin: 0; color: #09090b; font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
-    .header p { margin: 4px 0 0; color: #713f12; font-size: 13px; }
+    .header { background: #FACC15; padding: 24px 32px; display: flex; align-items: center; gap: 16px; }
+    .header img { width: 48px; height: 48px; border-radius: 12px; }
+    .header-text h1 { margin: 0; color: #09090b; font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
+    .header-text p { margin: 4px 0 0; color: #713f12; font-size: 13px; }
     .body { padding: 28px 32px; }
     .body h2 { color: #fff; font-size: 18px; margin: 0 0 12px; }
     .body p { color: #a1a1aa; line-height: 1.6; font-size: 14px; margin: 0 0 16px; }
@@ -131,13 +132,16 @@ const emailTemplate = (title: string, body: string, ctaText?: string, ctaLink?: 
 <body>
   <div class="container">
     <div class="header">
-      <h1>DELEGATE</h1>
-      <p>Team Scheduling & Coordination</p>
+      <img src="https://delegate-backend.onrender.com/delegate-logo.png" alt="Delegate Logo" />
+      <div class="header-text">
+        <h1>DELEGATE</h1>
+        <p>Team Scheduling & Coordination</p>
+      </div>
     </div>
     <div class="body">
-      <h2>${title}</h2>
-      ${body}
-      ${ctaText && ctaLink ? `<a href="${ctaLink}" class="cta">${ctaText}</a>` : ''}
+      <h2>\${title}</h2>
+      \${body}
+      \${ctaText && ctaLink ? \`<a href="\${ctaLink}" class="cta">\${ctaText}</a>\` : ''}
     </div>
     <div class="footer">
       <p>You are receiving this because you are a member of a Delegate team. This is an automated message.</p>

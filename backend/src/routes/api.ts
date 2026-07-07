@@ -13,7 +13,8 @@ import {
   requestPasswordReset,
   resetPassword,
   verifyEmail,
-  deleteAccount
+  deleteAccount,
+  backfillWelcomeEmails
 } from '../controllers/authController.js';
 import {
   createBusiness,
@@ -104,6 +105,7 @@ router.post('/auth/request-reset', requestPasswordReset);
 router.post('/auth/reset-password', resetPassword);
 router.post('/auth/verify-email', verifyEmail);
 router.delete('/auth/delete-account', authenticateToken, deleteAccount);
+router.post('/auth/backfill-welcome-emails', authenticateToken, backfillWelcomeEmails);
 
 // ==================== BUSINESSES ====================
 router.post('/businesses', authenticateToken, createBusiness);
