@@ -6,7 +6,7 @@ import { Scanner } from '@yudiel/react-qr-scanner';
 import { 
   Building2, PlusCircle, CheckCircle, Shield, Link, 
   UserPlus, Clipboard, Check, Trash2, Calendar, 
-  ListTodo, Clock, MapPin, Users, Loader2, Camera, Keyboard, QrCode
+  ListTodo, Clock, MapPin, Users, Loader2, Camera, Keyboard, QrCode, Copy, X
 } from 'lucide-react';
 
 const Businesses: React.FC = () => {
@@ -26,6 +26,8 @@ const Businesses: React.FC = () => {
   const [joinSuccess, setJoinSuccess] = useState('');
   
   const [copiedLink, setCopiedLink] = useState('');
+  const [copiedCode, setCopiedCode] = useState('');
+  const [showQRBiz, setShowQRBiz] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
 
   // --- Team Management State ---
@@ -375,38 +377,81 @@ const Businesses: React.FC = () => {
               <p className="text-xs mt-1">Create one or scan an invite link to start scheduling.</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {businesses.map((biz) => {
                 const isActive = currentBusiness?.id === biz.id;
+                const canManage = ['OWNER', 'ADMIN', 'MANAGER'].includes(biz.userRole);
+                
                 return (
                   <div
                     key={biz.id}
-                    className={`glass-panel rounded-card p-5 flex items-center justify-between cursor-pointer transition-all border ${
+                    className={`glass-panel rounded-card flex flex-col relative overflow-hidden transition-all border ${
                       isActive ? 'border-brand/40 shadow-neon bg-brand/5' : 'hover:border-zinc-700 bg-zinc-900/40'
                     }`}
-                    onClick={() => selectBusiness(biz)}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-11 h-11 rounded-inner flex items-center justify-center font-bold border ${
-                        isActive ? 'bg-brand text-dark-900 border-brand' : 'bg-zinc-800 text-white border-zinc-700'
-                      }`}>
-                        {biz.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-white text-sm flex items-center gap-1.5">
-                          {biz.name}
-                          {isActive && <CheckCircle className="h-4.5 w-4.5 text-brand shrink-0" />}
-                        </h4>
-                        <p className="text-zinc-500 text-xs mt-0.5">{biz.description || 'No description'}</p>
-                      </div>
-                    </div>
+                    {/* Background accent for active */}
+                    {isActive && <div className="absolute top-0 right-0 w-24 h-24 bg-brand/10 rounded-full blur-2xl pointer-events-none" />}
                     
-                    <div className="text-right">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-800 text-[10px] font-bold tracking-wider text-brand border border-zinc-700">
-                        <Shield className="h-3 w-3" />
-                        {biz.userRole}
-                      </span>
+                    <div 
+                      className="p-5 flex-1 cursor-pointer"
+                      onClick={() => selectBusiness(biz)}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg border shadow-inner ${
+                          isActive ? 'bg-brand text-dark-900 border-brand/50' : 'bg-dark-900 text-white border-zinc-700'
+                        }`}>
+                          {biz.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider border ${
+                          isActive ? 'bg-brand/20 text-brand border-brand/30' : 'bg-dark-900 text-zinc-400 border-zinc-800'
+                        }`}>
+                          <Shield className="h-3 w-3" />
+                          {biz.userRole}
+                        </span>
+                      </div>
+                      
+                      <h4 className="font-bold text-white text-base flex items-center gap-1.5 mb-1 relative z-10">
+                        {biz.name}
+                        {isActive && <CheckCircle className="h-4.5 w-4.5 text-brand shrink-0" />}
+                      </h4>
+                      <p className="text-zinc-500 text-xs line-clamp-2 relative z-10">{biz.description || 'No description provided.'}</p>
                     </div>
+
+                    {/* Invite Code Section (Only for Managers+) */}
+                    {canManage && biz.inviteCode && (
+                      <div className="border-t border-zinc-800/50 bg-dark-900/50 p-4 relative z-10">
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">Invite Code</p>
+                            <p className="font-mono text-white text-sm tracking-widest">{biz.inviteCode.toUpperCase()}</p>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard.writeText((biz.inviteCode || '').toUpperCase());
+                                setCopiedCode(biz.id);
+                                setTimeout(() => setCopiedCode(''), 2000);
+                              }}
+                              className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
+                              title="Copy Code"
+                            >
+                              {copiedCode === biz.id ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowQRBiz(biz);
+                              }}
+                              className="p-2 rounded-lg bg-brand/10 hover:bg-brand/20 text-brand border border-brand/20 transition-colors"
+                              title="Show QR Code"
+                            >
+                              <QrCode className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -571,7 +616,40 @@ const Businesses: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
+
+      {/* QR Code Modal */}
+      {showQRBiz && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-dark-900 border border-zinc-800 rounded-xl max-w-sm w-full p-6 shadow-2xl relative">
+            <button
+              onClick={() => setShowQRBiz(null)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white bg-zinc-800/50 hover:bg-zinc-800 p-1.5 rounded-full transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
+            <div className="text-center mb-6 mt-2">
+              <h3 className="text-lg font-bold text-white mb-1">Scan to Join</h3>
+              <p className="text-zinc-400 text-sm">Join <span className="text-brand font-semibold">{showQRBiz.name}</span></p>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl mx-auto w-max mb-6">
+              <QRCodeSVG 
+                value={showQRBiz.inviteCode} 
+                size={200}
+                level="M"
+                includeMargin={false}
+              />
+            </div>
+
+            <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-4 text-center">
+              <p className="text-xs text-zinc-500 uppercase font-semibold tracking-wider mb-2">Or Use Invite Code</p>
+              <p className="text-2xl font-mono font-bold text-white tracking-[0.2em]">{(showQRBiz.inviteCode || '').toUpperCase()}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
 
       {/* --- Team Workspace Details Panels --- */}
       {currentBusiness && (
