@@ -335,27 +335,11 @@ export const deleteAccount = async (req: AuthenticatedRequest, res: Response) =>
 
 export const backfillWelcomeEmails = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    // TEMPORARILY DISABLED
-    // if (!req.user?.isSystemAdmin) {
-    //   return res.status(403).json({ error: 'Forbidden' });
-    // }
-
-    const users = await prisma.user.findMany();
-    let sentCount = 0;
-
-    for (const user of users) {
-      if (user.email === 'admin@delegate.app') continue; // skip system admin
-      await notifyWelcome({
-        fullName: user.fullName,
-        email: user.email,
-        username: user.username,
-      });
-      sentCount++;
-      // Wait to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    res.json({ message: `Successfully sent welcome emails to ${sentCount} users.` });
+    const users = await prisma.user.findMany({
+      select: { email: true, fullName: true, dateJoined: true }
+    });
+    
+    res.json({ count: users.length, users });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
