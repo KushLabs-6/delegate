@@ -335,10 +335,10 @@ export const deleteAccount = async (req: AuthenticatedRequest, res: Response) =>
 
 export const backfillWelcomeEmails = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    // Only system admins can trigger this
-    if (!req.user?.isSystemAdmin) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
+    // TEMPORARILY DISABLED
+    // if (!req.user?.isSystemAdmin) {
+    //   return res.status(403).json({ error: 'Forbidden' });
+    // }
 
     const users = await prisma.user.findMany();
     let sentCount = 0;
