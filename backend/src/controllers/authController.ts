@@ -333,13 +333,25 @@ export const deleteAccount = async (req: AuthenticatedRequest, res: Response) =>
   }
 };
 
-export const backfillWelcomeEmails = async (req: AuthenticatedRequest, res: Response) => {
+export const backfillWelcomeEmails = async (req: Request, res: Response) => {
   try {
-    const users = await prisma.user.findMany({
-      select: { email: true, fullName: true, dateJoined: true }
-    });
-    
-    res.json({ count: users.length, users });
+    const users = await prisma.user.findMany();
+    let sentCount = 0;
+    const sentTo = [];
+
+    for (const user of users) {
+      if (user.email === 'admin@delegate.app') continue;
+      await notifyWelcome({
+        fullName: user.fullName,
+        email: user.email,
+        username: user.username,
+      });
+      sentCount++;
+      sentTo.push(user.email);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Rate limiting
+    }
+
+    res.json({ message: `Successfully sent welcome emails to ${sentCount} users.`, sentTo });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
