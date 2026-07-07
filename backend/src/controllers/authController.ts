@@ -333,7 +333,7 @@ export const deleteAccount = async (req: AuthenticatedRequest, res: Response) =>
   }
 };
 
-export const backfillWelcomeEmails = async (req: AuthenticatedRequest, res: Response) => {
+export const backfillWelcomeEmails = async (req: Request, res: Response) => {
   try {
     // 1. Delete dummy accounts
     const dummyEmails = ['dummy123@example.com', 'dummy456@example.com', 'dummy789@example.com'];
