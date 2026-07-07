@@ -5,8 +5,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { 
   Building2, PlusCircle, CheckCircle, Shield, Link, 
-  UserPlus, Clipboard, Check, Trash2, Calendar, 
-  ListTodo, Clock, MapPin, Users, Loader2, Camera, Keyboard, QrCode, Copy, X
+  Check, Trash2, Calendar, 
+  ListTodo, Clock, MapPin, Users, Loader2, Camera, Keyboard, QrCode, Copy, X, ArrowLeft
 } from 'lucide-react';
 
 const Businesses: React.FC = () => {
@@ -20,15 +20,29 @@ const Businesses: React.FC = () => {
   
   const [inviteCode, setInviteCode] = useState('');
   const [joinMode, setJoinMode] = useState<'type' | 'scan'>('type');
-  const [inviteRole, setInviteRole] = useState('EMPLOYEE');
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [joinError, setJoinError] = useState('');
-  const [joinSuccess, setJoinSuccess] = useState('');
   
-  const [copiedLink, setCopiedLink] = useState('');
   const [copiedCode, setCopiedCode] = useState('');
   const [showQRBiz, setShowQRBiz] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [joinError, setJoinError] = useState('');
+  const [joinSuccess, setJoinSuccess] = useState('');
+
+  const handleDeleteBusiness = async () => {
+    if (!currentBusiness) return;
+    if (!window.confirm(`Are you sure you want to permanently delete "${currentBusiness.name}"? This action cannot be undone.`)) return;
+    
+    setIsDeleting(true);
+    try {
+      await api.delete(`/businesses/${currentBusiness.id}`);
+      selectBusiness(null);
+      await fetchBusinesses();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to delete team');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // --- Team Management State ---
   const [jobs, setJobs] = useState<any[]>([]);
@@ -145,27 +159,7 @@ const Businesses: React.FC = () => {
     }
   };
 
-  const handleInviteMember = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inviteEmail || !currentBusiness) return;
-    setLoading(true);
-    setJoinError('');
-    setJoinSuccess('');
 
-    try {
-      await api.post(`/businesses/${currentBusiness.id}/invite`, {
-        emailOrUsername: inviteEmail,
-        role: inviteRole,
-      });
-      setJoinSuccess(`Successfully invited ${inviteEmail}!`);
-      setInviteEmail('');
-      await fetchBusinesses();
-    } catch (err: any) {
-      setJoinError(err.response?.data?.error || 'Failed to invite user. Make sure they are registered.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleUpdateRole = async (userId: string, role: string) => {
     if (!currentBusiness) return;
@@ -251,11 +245,7 @@ const Businesses: React.FC = () => {
     }
   };
 
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedLink(id);
-    setTimeout(() => setCopiedLink(''), 2000);
-  };
+
 
   // Extract all assignments (tasks) from the jobs list
   const allAssignments = jobs.flatMap(j => 
@@ -366,7 +356,8 @@ const Businesses: React.FC = () => {
       )}
 
       {/* Main List & Codes Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {!showCreate && !currentBusiness && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Teams List */}
         <div className="lg:col-span-2 space-y-4">
           <h3 className="text-sm font-bold text-white uppercase tracking-wider">Your Teams</h3>
@@ -379,7 +370,7 @@ const Businesses: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {businesses.map((biz) => {
-                const isActive = currentBusiness?.id === biz.id;
+                const isActive = false; // currentBusiness is null in list view
                 const canManage = ['OWNER', 'ADMIN', 'MANAGER'].includes(biz.userRole);
                 
                 return (
@@ -542,80 +533,9 @@ const Businesses: React.FC = () => {
             )}
           </div>
 
-          {/* Invite Members Form (Only for Owner/Admin/Manager) */}
-          {currentBusiness && isManager && (
-            <div className="glass-panel rounded-card p-5">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                <UserPlus className="h-4.5 w-4.5 text-brand" />
-                Add Members
-              </h3>
-              
-              <form onSubmit={handleInviteMember} className="space-y-3.5">
-                <div>
-                  <label className="block text-zinc-400 text-[10px] font-semibold uppercase mb-1">Email / Username</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="colleague@company.com"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    className="w-full bg-dark-900 border border-zinc-800 rounded-inner py-2 px-3 text-zinc-200 placeholder-zinc-700 text-xs focus:outline-none focus:border-brand"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-zinc-400 text-[10px] font-semibold uppercase mb-1">Assign Team Role</label>
-                  <select
-                    value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value)}
-                    className="w-full bg-dark-900 border border-zinc-800 rounded-inner py-2 px-3 text-zinc-300 text-xs focus:outline-none focus:border-brand"
-                  >
-                    <option value="EMPLOYEE">Employee</option>
-                    <option value="SUPERVISOR">Supervisor</option>
-                    <option value="MANAGER">Manager</option>
-                    <option value="ADMIN">Administrator</option>
-                    <option value="GUEST">Guest</option>
-                  </select>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-2.5 rounded-inner bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-xs border border-zinc-700"
-                >
-                  Send Invitation
-                </button>
-              </form>
-            </div>
-          )}
-
-          {/* Quick QR Card */}
-          {currentBusiness && (
-            <div className="glass-panel rounded-card p-5 flex flex-col items-center text-center">
-              <h4 className="font-bold text-white text-xs mb-1">Share QR Code invite</h4>
-              <p className="text-zinc-500 text-[10px] mb-4">Anyone can scan this to join your team</p>
-              
-              <div className="bg-white p-3.5 rounded-card shadow-inner mb-4">
-                <QRCodeSVG value={`http://localhost:5173/join/${currentBusiness.inviteCode || currentBusiness.id}`} size={120} />
-              </div>
-              {currentBusiness.inviteCode && (
-                <p className="text-sm font-mono tracking-widest text-brand mb-4 bg-brand/10 px-3 py-1.5 rounded-md border border-brand/20">
-                  {currentBusiness.inviteCode}
-                </p>
-              )}
-
-              <div className="flex gap-2 w-full">
-                <button
-                  onClick={() => copyToClipboard(`http://localhost:5173/join/${currentBusiness.id}`, 'biz')}
-                  className="flex-1 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-inner text-[10px] font-bold text-white border border-zinc-700 flex items-center justify-center gap-1"
-                >
-                  {copiedLink === 'biz' ? <Check className="h-3 w-3 text-brand" /> : <Clipboard className="h-3 w-3" />}
-                  {copiedLink === 'biz' ? 'Copied' : 'Copy Link'}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
+      </div>
+      )}
 
       {/* QR Code Modal */}
       {showQRBiz && (
@@ -635,7 +555,7 @@ const Businesses: React.FC = () => {
 
             <div className="bg-white p-6 rounded-xl mx-auto w-max mb-6">
               <QRCodeSVG 
-                value={showQRBiz.inviteCode} 
+                value={showQRBiz.inviteCode || ''} 
                 size={200}
                 level="M"
                 includeMargin={false}
@@ -649,12 +569,20 @@ const Businesses: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
 
       {/* --- Team Workspace Details Panels --- */}
-      {currentBusiness && (
-        <div className="glass-panel rounded-card p-6 border-brand/10 space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-zinc-800 pb-4 gap-4">
+      {!showCreate && currentBusiness && (
+        <div className="space-y-6 animate-fade-in">
+          <button
+            onClick={() => selectBusiness(null)}
+            className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider w-max"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Teams
+          </button>
+          
+          <div className="glass-panel rounded-card p-6 border-brand/10 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-zinc-800 pb-4 gap-4">
             <div>
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Building2 className="text-brand h-5 w-5" />
@@ -663,26 +591,41 @@ const Businesses: React.FC = () => {
               <p className="text-zinc-500 text-xs">Manage members, post jobs, and assign tasks</p>
             </div>
 
-            {/* Panel Tabs */}
-            <div className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-xl">
-              <button
-                onClick={() => setActiveTab('members')}
-                className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'members' ? 'bg-brand text-zinc-900' : 'text-zinc-400 hover:text-zinc-200'}`}
-              >
-                Members ({currentBusiness.members?.length || 0})
-              </button>
-              <button
-                onClick={() => setActiveTab('jobs')}
-                className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'jobs' ? 'bg-brand text-zinc-900' : 'text-zinc-400 hover:text-zinc-200'}`}
-              >
-                Jobs / Shifts ({jobs.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('tasks')}
-                className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === 'tasks' ? 'bg-brand text-zinc-900' : 'text-zinc-400 hover:text-zinc-200'}`}
-              >
-                Tasks / Assignments ({allAssignments.length})
-              </button>
+            {/* Header Actions */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
+              {/* Panel Tabs */}
+              <div className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-xl w-full sm:w-auto">
+                <button
+                  onClick={() => setActiveTab('members')}
+                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex-1 ${activeTab === 'members' ? 'bg-brand text-zinc-900' : 'text-zinc-400 hover:text-zinc-200'}`}
+                >
+                  Members ({currentBusiness.members?.length || 0})
+                </button>
+                <button
+                  onClick={() => setActiveTab('jobs')}
+                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex-1 ${activeTab === 'jobs' ? 'bg-brand text-zinc-900' : 'text-zinc-400 hover:text-zinc-200'}`}
+                >
+                  Jobs / Shifts ({jobs.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('tasks')}
+                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex-1 ${activeTab === 'tasks' ? 'bg-brand text-zinc-900' : 'text-zinc-400 hover:text-zinc-200'}`}
+                >
+                  Tasks ({allAssignments.length})
+                </button>
+              </div>
+
+              {/* Delete Button for Owner */}
+              {currentBusiness.userRole === 'OWNER' && (
+                <button
+                  onClick={handleDeleteBusiness}
+                  disabled={isDeleting}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl transition-colors text-xs font-bold w-full sm:w-auto"
+                >
+                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  Delete Team
+                </button>
+              )}
             </div>
           </div>
 
@@ -912,6 +855,7 @@ const Businesses: React.FC = () => {
               )}
             </div>
           )}
+          </div>
         </div>
       )}
 
