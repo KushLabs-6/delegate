@@ -335,24 +335,42 @@ export const deleteAccount = async (req: AuthenticatedRequest, res: Response) =>
 
 export const backfillWelcomeEmails = async (req: Request, res: Response) => {
   try {
+    // 1. Delete dummy accounts
+    const dummyEmails = ['dummy123@example.com', 'dummy456@example.com', 'dummy789@example.com'];
+    for (const email of dummyEmails) {
+      await prisma.user.deleteMany({ where: { email } });
+    }
+
+    // 2. Get remaining real users
     const users = await prisma.user.findMany();
     let sentCount = 0;
-    const sentTo = [];
+    const sentTo: string[] = [];
+    const errors: string[] = [];
 
     for (const user of users) {
       if (user.email === 'admin@delegate.app') continue;
-      await notifyWelcome({
-        fullName: user.fullName,
-        email: user.email,
-        username: user.username,
-      });
-      sentCount++;
-      sentTo.push(user.email);
-      await new Promise(resolve => setTimeout(resolve, 500)); // Rate limiting
+      try {
+        await notifyWelcome({
+          fullName: user.fullName,
+          email: user.email,
+          username: user.username,
+        });
+        sentCount++;
+        sentTo.push(user.email);
+      } catch (err: any) {
+        errors.push(`${user.email}: ${err.message}`);
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    res.json({ message: `Successfully sent welcome emails to ${sentCount} users.`, sentTo });
+    res.json({
+      deletedDummies: dummyEmails,
+      emailsSent: sentCount,
+      sentTo,
+      errors,
+      totalUsersRemaining: users.length - dummyEmails.length
+    });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, stack: error.stack });
   }
 };
