@@ -6,7 +6,7 @@ import { Scanner } from '@yudiel/react-qr-scanner';
 import { 
   Building2, PlusCircle, CheckCircle, Shield, Link, 
   Check, Trash2, Calendar, 
-  ListTodo, Clock, MapPin, Users, Loader2, Camera, Keyboard, QrCode, Copy, X, ArrowLeft, Edit
+  ListTodo, Clock, MapPin, Users, Loader2, Camera, Keyboard, QrCode, Copy, X, ArrowLeft, Edit, Cloud, ExternalLink
 } from 'lucide-react';
 import ChatHub from './ChatHub';
 import Meetings from './Meetings';
@@ -34,6 +34,10 @@ const Businesses: React.FC = () => {
   const [inviteIdentifier, setInviteIdentifier] = useState('');
   const [inviteRole, setInviteRole] = useState('EMPLOYEE');
   const [inviteError, setInviteError] = useState('');
+
+  const [showCloudModal, setShowCloudModal] = useState(false);
+  const [cloudLinkInput, setCloudLinkInput] = useState('');
+  const [savingCloudLink, setSavingCloudLink] = useState(false);
 
   const handleDeleteBusiness = async () => {
     if (!currentBusiness) return;
@@ -141,6 +145,21 @@ const Businesses: React.FC = () => {
       setJoinError(err.response?.data?.error || 'Invalid or expired invite code');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveCloudLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentBusiness) return;
+    setSavingCloudLink(true);
+    try {
+      await api.put(`/businesses/${currentBusiness.id}/cloud-link`, { cloudStorageLink: cloudLinkInput });
+      setShowCloudModal(false);
+      await fetchBusinesses(); // refresh data
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to update cloud link');
+    } finally {
+      setSavingCloudLink(false);
     }
   };
 
@@ -630,6 +649,48 @@ const Businesses: React.FC = () => {
                     </button>
                   </div>
                 )}
+                
+                {/* Cloud Storage Button */}
+                {currentBusiness.cloudStorageLink ? (
+                  <div className="flex items-center gap-1 w-full sm:w-auto">
+                    <a
+                      href={currentBusiness.cloudStorageLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 rounded-xl transition-colors text-xs font-bold"
+                    >
+                      <Cloud className="h-4 w-4" />
+                      Team Files
+                      <ExternalLink className="h-3 w-3 opacity-70" />
+                    </a>
+                    {['OWNER', 'ADMIN', 'MANAGER'].includes(currentBusiness.userRole) && (
+                      <button
+                        onClick={() => {
+                          setCloudLinkInput(currentBusiness.cloudStorageLink || '');
+                          setShowCloudModal(true);
+                        }}
+                        className="px-3 py-2 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 border border-zinc-700 rounded-xl transition-colors"
+                        title="Edit Cloud Link"
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  ['OWNER', 'ADMIN', 'MANAGER'].includes(currentBusiness.userRole) && (
+                    <button
+                      onClick={() => {
+                        setCloudLinkInput('');
+                        setShowCloudModal(true);
+                      }}
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 border border-zinc-700 rounded-xl transition-colors text-xs font-bold w-full sm:w-auto"
+                    >
+                      <Cloud className="h-4 w-4" />
+                      Link Cloud
+                    </button>
+                  )
+                )}
+
                 <button
                   onClick={() => setShowQRBiz(currentBusiness)}
                   className="flex items-center justify-center gap-2 px-4 py-2 bg-brand/10 hover:bg-brand/20 text-brand border border-brand/20 rounded-xl transition-colors text-xs font-bold w-full sm:w-auto"
@@ -1329,6 +1390,62 @@ const Businesses: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Cloud Storage Modal */}
+      {showCloudModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-dark-900 border border-zinc-800 rounded-xl max-w-md w-full p-6 shadow-2xl relative">
+            <button
+              onClick={() => setShowCloudModal(false)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white bg-zinc-800/50 hover:bg-zinc-800 p-1.5 rounded-full transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-blue-500/10 rounded-xl">
+                <Cloud className="h-6 w-6 text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">Cloud Storage Link</h3>
+                <p className="text-zinc-400 text-xs mt-1">Connect Google Drive, Dropbox, or OneDrive.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveCloudLink} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Folder URL</label>
+                <input
+                  type="url"
+                  placeholder="https://drive.google.com/drive/folders/..."
+                  value={cloudLinkInput}
+                  onChange={(e) => setCloudLinkInput(e.target.value)}
+                  className="w-full bg-dark-900/50 border border-zinc-800 rounded-inner py-3 px-4 text-white placeholder-zinc-700 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                />
+                <p className="text-[10px] text-zinc-500 mt-2">Paste the shared link to your team's main folder. Anyone in this workspace will be able to click and open it.</p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCloudModal(false)}
+                  className="flex-1 py-2.5 rounded-inner bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold text-xs transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingCloudLink}
+                  className="flex-1 py-2.5 rounded-inner bg-blue-500 text-white font-bold hover:bg-blue-400 transition-colors text-xs disabled:opacity-50"
+                >
+                  {savingCloudLink ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : 'Save Link'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

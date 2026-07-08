@@ -666,3 +666,21 @@ export const joinBusinessByCode = async (req: AuthenticatedRequest, res: Respons
     res.status(500).json({ error: error.message });
   }
 };
+
+// Update Cloud Storage Link
+export const updateCloudLink = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    const { businessId } = req.params;
+    const { cloudStorageLink } = req.body;
+
+    const business = await prisma.business.update({
+      where: { id: businessId },
+      data: { cloudStorageLink },
+    });
+
+    res.json(business);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};

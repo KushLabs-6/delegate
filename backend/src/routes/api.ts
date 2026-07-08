@@ -32,7 +32,8 @@ import {
   joinGroupByCode,
   leaveGroup,
   getInviteQRCode,
-  joinBusinessByCode
+  joinBusinessByCode,
+  updateCloudLink
 } from '../controllers/businessController.js';
 import {
   createJob,
@@ -117,6 +118,7 @@ router.get('/businesses/:businessId', authenticateToken, requireRole(['OWNER', '
 router.put('/businesses/:businessId', authenticateToken, requireRole(['OWNER', 'ADMIN']), updateBusiness);
 router.delete('/businesses/:businessId', authenticateToken, requireRole(['OWNER']), deleteBusiness);
 router.post('/businesses/join', authenticateToken, joinBusinessByCode);
+router.put('/businesses/:businessId/cloud-link', authenticateToken, requireRole(['OWNER', 'ADMIN', 'MANAGER']), updateCloudLink);
 
 // Business Member Invites/Roles
 router.post('/businesses/:businessId/invite', authenticateToken, requireRole(['OWNER', 'ADMIN', 'MANAGER']), inviteMember);

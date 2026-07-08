@@ -30,7 +30,10 @@ interface Business {
   name: string;
   description?: string;
   logo?: string;
+  website?: string;
+  phone?: string;
   inviteCode?: string;
+  cloudStorageLink?: string;
   userRole: string;
   ownerId: string;
   createdAt: string;
