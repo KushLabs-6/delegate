@@ -380,3 +380,29 @@ export const backfillWelcomeEmails = async (req: Request, res: Response) => {
     res.status(500).json({ error: error.message, stack: error.stack });
   }
 };
+
+// Save Firebase Device Token for Push Notifications
+export const saveDeviceToken = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    const { token } = req.body;
+
+    if (!token) return res.status(400).json({ error: 'Device token is required' });
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const currentTokens = user.fcmTokens || [];
+    if (!currentTokens.includes(token)) {
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: { fcmTokens: { push: token } }
+      });
+    }
+
+    res.json({ message: 'Device token saved successfully' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+

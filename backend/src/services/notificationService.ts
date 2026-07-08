@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import prisma from '../config/db.js';
+import { messaging } from '../config/firebase.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface NotifyUser {
@@ -31,7 +32,7 @@ const formatShiftTime = (job: NotifyJob): string => {
   return end ? `${date} · ${start} – ${end}` : `${date} · ${start}`;
 };
 
-// ─── In-App Notification ──────────────────────────────────────────────────────
+// ─── In-App & Push Notification ────────────────────────────────────────────────
 export const sendInAppNotification = async (
   userId: string,
   title: string,
@@ -43,6 +44,33 @@ export const sendInAppNotification = async (
     await prisma.notification.create({
       data: { userId, title, description, type, link },
     });
+
+    // Send push notification via Firebase Cloud Messaging
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { fcmTokens: true }
+    });
+
+    if (user && user.fcmTokens && user.fcmTokens.length > 0) {
+      const message = {
+        notification: {
+          title,
+          body: description,
+        },
+        data: {
+          url: link || '/',
+          type
+        },
+        tokens: user.fcmTokens
+      };
+
+      try {
+        const response = await messaging.sendEachForMulticast(message);
+        // We could clean up invalid tokens here based on response.responses
+      } catch (fcmError) {
+        console.error('[FCM Notification] Failed:', fcmError);
+      }
+    }
   } catch (err) {
     console.error('[In-App Notification] Failed:', err);
   }

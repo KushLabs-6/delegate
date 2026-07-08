@@ -30,6 +30,11 @@ const Businesses: React.FC = () => {
   const [joinError, setJoinError] = useState('');
   const [joinSuccess, setJoinSuccess] = useState('');
 
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteIdentifier, setInviteIdentifier] = useState('');
+  const [inviteRole, setInviteRole] = useState('EMPLOYEE');
+  const [inviteError, setInviteError] = useState('');
+
   const handleDeleteBusiness = async () => {
     if (!currentBusiness) return;
     if (!window.confirm(`Are you sure you want to permanently delete "${currentBusiness.name}"? This action cannot be undone.`)) return;
@@ -175,12 +180,32 @@ const Businesses: React.FC = () => {
 
   const handleRemoveMember = async (userId: string) => {
     if (!currentBusiness) return;
-    if (!confirm('Are you sure you want to remove this member from the team?')) return;
+    if (!window.confirm('Are you sure you want to remove this member from the team?')) return;
     try {
-      await api.post(`/businesses/${currentBusiness.id}/remove`, { userId });
+      await api.delete(`/businesses/${currentBusiness.id}/members`, { data: { userId } });
       await fetchBusinesses();
     } catch (err: any) {
       alert(err.response?.data?.error || 'Failed to remove member');
+    }
+  };
+
+  const handleInviteMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentBusiness) return;
+    setLoading(true);
+    setInviteError('');
+    try {
+      await api.post(`/businesses/${currentBusiness.id}/invite`, {
+        emailOrUsername: inviteIdentifier,
+        role: inviteRole
+      });
+      setShowInviteModal(false);
+      setInviteIdentifier('');
+      await fetchBusinesses();
+    } catch (err: any) {
+      setInviteError(err.response?.data?.error || 'Failed to add member');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -625,21 +650,36 @@ const Businesses: React.FC = () => {
               <p className="text-zinc-500 text-xs">Manage members, post jobs, and assign tasks</p>
             </div>
 
-            {/* Header Actions */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
-
-              {/* Delete Button for Owner */}
-              {currentBusiness.userRole === 'OWNER' && (
+              {/* Header Actions */}
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
                 <button
-                  onClick={handleDeleteBusiness}
-                  disabled={isDeleting}
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl transition-colors text-xs font-bold w-full sm:w-auto"
+                  onClick={() => setShowQRBiz(currentBusiness)}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-brand/10 hover:bg-brand/20 text-brand border border-brand/20 rounded-xl transition-colors text-xs font-bold w-full sm:w-auto"
                 >
-                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                  Delete Team
+                  <QrCode className="h-4 w-4" />
+                  Show QR
                 </button>
-              )}
-            </div>
+                {['OWNER', 'ADMIN', 'MANAGER'].includes(currentBusiness.userRole) && (
+                  <button
+                    onClick={() => setShowInviteModal(true)}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-brand hover:bg-brand-glow text-dark-900 rounded-xl transition-colors text-xs font-bold w-full sm:w-auto"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    Add Member
+                  </button>
+                )}
+                {/* Delete Button for Owner */}
+                {currentBusiness.userRole === 'OWNER' && (
+                  <button
+                    onClick={handleDeleteBusiness}
+                    disabled={isDeleting}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl transition-colors text-xs font-bold w-full sm:w-auto"
+                  >
+                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    Delete Team
+                  </button>
+                )}
+              </div>
           </div>
 
           {/* SECTION 1: MEMBERS */}
@@ -909,6 +949,68 @@ const Businesses: React.FC = () => {
         </div>
       </div>
     )}
+
+      {/* --- ADD MEMBER MODAL --- */}
+      {showInviteModal && currentBusiness && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={() => setShowInviteModal(false)}>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Users className="text-brand h-5 w-5" />
+                Add Member to Team
+              </h3>
+              <button onClick={() => setShowInviteModal(false)} className="text-zinc-500 hover:text-white">✕</button>
+            </div>
+
+            {inviteError && <p className="text-xs text-red-400 bg-red-950/40 p-2 rounded">{inviteError}</p>}
+
+            <form onSubmit={handleInviteMember} className="space-y-4">
+              <div>
+                <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Email or Username *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. john@example.com or johndoe"
+                  value={inviteIdentifier}
+                  onChange={e => setInviteIdentifier(e.target.value)}
+                  className="w-full bg-dark-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Role *</label>
+                <select
+                  value={inviteRole}
+                  onChange={e => setInviteRole(e.target.value)}
+                  className="w-full bg-dark-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-brand"
+                >
+                  <option value="EMPLOYEE">Employee</option>
+                  <option value="SUPERVISOR">Supervisor</option>
+                  <option value="MANAGER">Manager</option>
+                  <option value="ADMIN">Administrator</option>
+                </select>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowInviteModal(false)}
+                  className="flex-1 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || !inviteIdentifier}
+                  className="flex-1 py-2 bg-brand text-dark-900 text-xs font-bold rounded-lg hover:bg-brand-glow"
+                >
+                  {loading ? 'Adding...' : 'Add Member'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* --- POST JOB MODAL --- */}
       {showPostJobModal && (

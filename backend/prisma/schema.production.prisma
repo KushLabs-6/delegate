@@ -18,6 +18,7 @@ model User {
   dateJoined    DateTime         @default(now())
   isSystemAdmin Boolean          @default(false)
   subscriptionPlan String        @default("FREE") // "FREE" or "PREMIUM"
+  fcmTokens     String[]         @default([])
 
   // Relations
   ownedBusinesses  Business[]      @relation("BusinessOwner")

@@ -21,6 +21,8 @@ import ChatHub from './pages/ChatHub';
 import Profile from './pages/Profile';
 import Subscription from './pages/Subscription';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { PushNotifications } from '@capacitor/push-notifications';
+import { Capacitor } from '@capacitor/core';
 
 // Icons
 import {
@@ -251,6 +253,48 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 15000); // Poll more frequently (15s) for better real-time updates
     return () => clearInterval(interval);
+  }, [fetchUnreadCount]);
+
+  // Setup Push Notifications
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const setupPush = async () => {
+      let permStatus = await PushNotifications.checkPermissions();
+      if (permStatus.receive === 'prompt') {
+        permStatus = await PushNotifications.requestPermissions();
+      }
+
+      if (permStatus.receive !== 'granted') {
+        console.warn('User denied push notification permissions');
+        return;
+      }
+
+      await PushNotifications.register();
+
+      PushNotifications.addListener('registration', async (token) => {
+        console.log('Push registration success, token: ' + token.value);
+        try {
+          await api.post('/auth/device-token', { token: token.value });
+        } catch (err) {
+          console.error('Failed to save device token', err);
+        }
+      });
+
+      PushNotifications.addListener('registrationError', (error: any) => {
+        console.error('Error on registration: ' + JSON.stringify(error));
+      });
+      
+      PushNotifications.addListener('pushNotificationReceived', () => {
+        fetchUnreadCount();
+      });
+    };
+
+    setupPush();
+
+    return () => {
+      PushNotifications.removeAllListeners();
+    };
   }, [fetchUnreadCount]);
 
   const handleLogout = () => {

@@ -14,7 +14,8 @@ import {
   resetPassword,
   verifyEmail,
   deleteAccount,
-  backfillWelcomeEmails
+  backfillWelcomeEmails,
+  saveDeviceToken
 } from '../controllers/authController.js';
 import {
   createBusiness,
@@ -107,6 +108,7 @@ router.post('/auth/reset-password', resetPassword);
 router.post('/auth/verify-email', verifyEmail);
 router.delete('/auth/delete-account', authenticateToken, deleteAccount);
 router.post('/auth/backfill-welcome-emails', backfillWelcomeEmails);
+router.post('/auth/device-token', authenticateToken, saveDeviceToken);
 
 // ==================== BUSINESSES ====================
 router.post('/businesses', authenticateToken, createBusiness);
