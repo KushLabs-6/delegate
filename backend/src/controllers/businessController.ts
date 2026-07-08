@@ -88,9 +88,21 @@ export const getBusinesses = async (req: AuthenticatedRequest, res: Response) =>
       },
     });
 
-    const businesses = memberships.map(m => ({
-      ...m.business,
-      userRole: m.role,
+    const crypto = require('crypto');
+    const businesses = await Promise.all(memberships.map(async (m) => {
+      let business = m.business;
+      if (!business.inviteCode) {
+        const newCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+        await prisma.business.update({
+          where: { id: business.id },
+          data: { inviteCode: newCode },
+        });
+        business.inviteCode = newCode;
+      }
+      return {
+        ...business,
+        userRole: m.role,
+      };
     }));
 
     res.json(businesses);
@@ -143,6 +155,16 @@ export const getBusinessDetails = async (req: AuthenticatedRequest, res: Respons
     });
 
     if (!business) return res.status(404).json({ error: 'Business not found' });
+
+    if (!business.inviteCode) {
+      const crypto = require('crypto');
+      const newCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+      await prisma.business.update({
+        where: { id: business.id },
+        data: { inviteCode: newCode },
+      });
+      business.inviteCode = newCode;
+    }
 
     res.json({
       ...business,
