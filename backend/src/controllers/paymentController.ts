@@ -70,6 +70,9 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
 export const captureOrder = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const { orderId } = req.params;
+        if (!req.user) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
         
         const token = await getPayPalToken();
         const response = await fetch(`${PAYPAL_API}/v2/checkout/orders/${orderId}/capture`, {
