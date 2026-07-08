@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext.js';
 import api from '../services/api.js';
 import { QRCodeSVG } from 'qrcode.react';
 import { Scanner } from '@yudiel/react-qr-scanner';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Building2, PlusCircle, CheckCircle, Shield, Link, 
   Check, Trash2, Calendar, 
@@ -29,6 +30,8 @@ const Businesses: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [joinError, setJoinError] = useState('');
   const [joinSuccess, setJoinSuccess] = useState('');
+
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteIdentifier, setInviteIdentifier] = useState('');
@@ -125,6 +128,33 @@ const Businesses: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const joinCode = searchParams.get('join');
+    if (joinCode && !loading) {
+      setInviteCode(joinCode);
+      setJoinMode('type');
+      
+      const autoJoin = async () => {
+        setLoading(true);
+        setJoinError('');
+        try {
+          const res = await api.post('/businesses/join', { codeOrId: joinCode });
+          setJoinSuccess(`Successfully joined team! ${res.data.business.name}`);
+          setInviteCode('');
+          searchParams.delete('join');
+          setSearchParams(searchParams);
+          await fetchBusinesses();
+        } catch (err: any) {
+          setJoinError(err.response?.data?.error || 'Invalid or expired invite code');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      autoJoin();
+    }
+  }, [searchParams, fetchBusinesses]);
+
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteCode) return;
@@ -146,7 +176,17 @@ const Businesses: React.FC = () => {
 
   const handleScan = async (result: any) => {
     if (result && result.length > 0 && result[0].rawValue) {
-      const code = result[0].rawValue;
+      let code = result[0].rawValue;
+      try {
+        const url = new URL(code);
+        const joinParam = url.searchParams.get('join');
+        if (joinParam) {
+          code = joinParam;
+        }
+      } catch (e) {
+        // Not a URL, use as is
+      }
+      
       setInviteCode(code);
       setJoinMode('type');
       
@@ -614,7 +654,7 @@ const Businesses: React.FC = () => {
 
             <div className="bg-white p-6 rounded-xl mx-auto w-max mb-6">
               <QRCodeSVG 
-                value={showQRBiz.inviteCode || ''} 
+                value={`${window.location.origin}/businesses?join=${showQRBiz.inviteCode || ''}`}
                 size={200}
                 level="M"
                 includeMargin={false}
