@@ -209,4 +209,16 @@ router.post('/upload', authenticateToken, upload.single('file'), (req, res) => {
   }
 });
 
+// ==================== PAYMENTS ====================
+import { createOrder, captureOrder } from '../controllers/paymentController.js';
+router.post('/paypal/create-order', authenticateToken, createOrder);
+router.post('/paypal/capture-order/:orderId', authenticateToken, captureOrder);
+
+// ==================== MEETINGS ====================
+import { createMeeting, getMeetings, markAttendance, deleteMeeting } from '../controllers/meetingController.js';
+router.post('/groups/:groupId/meetings', authenticateToken, createMeeting);
+router.get('/groups/:groupId/meetings', authenticateToken, getMeetings);
+router.post('/meetings/:meetingId/attendance', authenticateToken, markAttendance);
+router.delete('/meetings/:meetingId', authenticateToken, deleteMeeting);
+
 export default router;

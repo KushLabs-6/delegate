@@ -8,6 +8,8 @@ import {
   Check, Trash2, Calendar, 
   ListTodo, Clock, MapPin, Users, Loader2, Camera, Keyboard, QrCode, Copy, X, ArrowLeft
 } from 'lucide-react';
+import ChatHub from './ChatHub';
+import Meetings from './Meetings';
 
 const Businesses: React.FC = () => {
   const { businesses, currentBusiness, selectBusiness, fetchBusinesses } = useAuth();
@@ -833,6 +835,17 @@ const Businesses: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* SECTION 4: MEETINGS & ATTENDANCE */}
+          <Meetings />
+
+          {/* SECTION 5: TEAM CHAT */}
+          <div className="pt-6 border-t border-zinc-800/50">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider">Team Chat & Comms</h4>
+            </div>
+            <ChatHub />
           </div>
         </div>
       </div>

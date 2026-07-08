@@ -19,6 +19,7 @@ import Jobs from './pages/Jobs';
 import CalendarView from './pages/CalendarView';
 import ChatHub from './pages/ChatHub';
 import Profile from './pages/Profile';
+import Subscription from './pages/Subscription';
 
 // Icons
 import {
@@ -34,6 +35,7 @@ import {
   Menu,
   X,
   CheckCheck,
+  DollarSign,
 } from 'lucide-react';
 
 // ─── Protected Route ──────────────────────────────────────────────────────────
@@ -162,6 +164,7 @@ const navItems = [
   { path: '/jobs', label: 'Jobs', icon: ClipboardList },
   { path: '/calendar', label: 'Calendar', icon: CalendarDays },
   { path: '/chat', label: 'Chat', icon: MessageSquare },
+  { path: '/subscription', label: 'Premium', icon: DollarSign },
 ];
 
 const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -517,6 +520,17 @@ const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <AppShell>
               <Profile />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/subscription"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <Subscription />
             </AppShell>
           </ProtectedRoute>
         }
