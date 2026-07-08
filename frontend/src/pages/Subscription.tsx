@@ -196,26 +196,36 @@ const Subscription: React.FC = () => {
   return (
     <div className="p-4 sm:p-8 max-w-4xl mx-auto flex gap-8 flex-wrap justify-center mt-10">
       <style>{`
-        .paypal-field-container { transition: all 0.2s ease; }
-        .paypal-field-container:focus-within { border-color: var(--primary-color) !important; box-shadow: 0 0 0 2px rgba(254,225,0,0.2); }
+        .paypal-field-container { transition: all 0.2s ease; overflow: hidden; }
+        .paypal-field-container:focus-within { border-color: #FFD700 !important; box-shadow: 0 0 0 2px rgba(254,225,0,0.2); }
+        .paypal-field-container iframe { border: none !important; background: transparent !important; color-scheme: dark !important; }
+        #card-number iframe, #card-expiry iframe, #card-cvv iframe {
+          background: transparent !important;
+          border: none !important;
+          filter: invert(1) hue-rotate(180deg) brightness(1.5) contrast(0.85);
+        }
       `}</style>
       
       {/* Order Summary */}
       <div className="bg-zinc-900 border-t-4 border-brand p-8 rounded-2xl w-full max-w-sm shrink-0">
         <h3 className="text-xs text-zinc-500 uppercase tracking-widest mb-4 font-bold">Select Option</h3>
         
-        <div className="flex bg-zinc-850 p-1 rounded-xl mb-6 border border-zinc-800">
+        <div className="grid grid-cols-2 gap-3 mb-6">
           <button 
             onClick={() => setPaymentType('premium')}
-            className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-colors ${paymentType === 'premium' ? 'bg-brand text-zinc-900' : 'text-zinc-400 hover:text-zinc-200'}`}
+            className={`p-4 rounded-xl border-2 text-center transition-all ${paymentType === 'premium' ? 'border-brand bg-brand/10' : 'border-zinc-800 bg-zinc-800/30 hover:border-zinc-700'}`}
           >
-            Premium
+            <div className="text-2xl mb-1">👑</div>
+            <p className={`text-sm font-black ${paymentType === 'premium' ? 'text-brand' : 'text-zinc-300'}`}>Premium</p>
+            <p className="text-[10px] text-zinc-500 mt-0.5">$20/mo</p>
           </button>
           <button 
             onClick={() => setPaymentType('donation')}
-            className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-colors ${paymentType === 'donation' ? 'bg-brand text-zinc-900' : 'text-zinc-400 hover:text-zinc-200'}`}
+            className={`p-4 rounded-xl border-2 text-center transition-all ${paymentType === 'donation' ? 'border-brand bg-brand/10' : 'border-zinc-800 bg-zinc-800/30 hover:border-zinc-700'}`}
           >
-            Support
+            <div className="text-2xl mb-1">💛</div>
+            <p className={`text-sm font-black ${paymentType === 'donation' ? 'text-brand' : 'text-zinc-300'}`}>Support</p>
+            <p className="text-[10px] text-zinc-500 mt-0.5">Any amount</p>
           </button>
         </div>
 

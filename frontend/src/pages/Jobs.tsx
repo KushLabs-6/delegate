@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   Plus, MapPin, Clock, Users, ChevronDown, ChevronUp,
   CheckCircle, XCircle, Loader2, Calendar, AlertCircle,
-  Briefcase, ClipboardList, Star, X, MessageSquare, Trash2,
+  Briefcase, ClipboardList, Star, X, MessageSquare, Trash2, ListTodo,
 } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -686,8 +686,18 @@ const Jobs: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [mySchedule, setMySchedule] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'board' | 'schedule'>('board');
+  const [tab, setTab] = useState<'board' | 'schedule' | 'assignments'>('board');
   const [showPostModal, setShowPostModal] = useState(false);
+
+  const handleToggleTask = async (taskId: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
+      await api.put(`/assignments/${taskId}`, { status: newStatus });
+      fetchJobs();
+    } catch (err) {
+      alert('Failed to update task status');
+    }
+  };
 
   // Role detection
   const myMembership = (currentBusiness as any)?.members?.find((m: any) => m.userId === user?.id);
@@ -732,6 +742,9 @@ const Jobs: React.FC = () => {
   );
   const pendingCount = jobs.reduce((acc, j) =>
     acc + j.signups.filter(s => s.status === 'PENDING').length, 0
+  );
+  const myAssignments = jobs.flatMap(j => 
+    ((j as any).assignments || []).filter((a: any) => a.userId === user?.id).map((a: any) => ({ ...a, jobTitle: j.title }))
   );
 
   return (
@@ -788,6 +801,23 @@ const Jobs: React.FC = () => {
             </span>
           )}
         </button>
+        <button
+          id="tab-assignments"
+          onClick={() => setTab('assignments')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
+            tab === 'assignments' ? 'bg-brand text-zinc-900' : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <ListTodo size={14} />
+          My Tasks
+          {myAssignments.length > 0 && (
+            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+              tab === 'assignments' ? 'bg-zinc-900 text-brand' : 'bg-zinc-700 text-zinc-300'
+            }`}>
+              {myAssignments.filter((t: any) => t.status !== 'COMPLETED').length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Content */}
@@ -823,18 +853,50 @@ const Jobs: React.FC = () => {
             )
           )}
         </div>
-      ) : (
+      ) : tab === 'schedule' ? (
         <div className="space-y-4">
           {mySchedule.length === 0 ? (
             <div className="text-center py-16">
               <Calendar size={40} className="text-zinc-700 mx-auto mb-3" />
               <p className="text-zinc-400 font-medium">No confirmed shifts yet</p>
-              <p className="text-zinc-600 text-sm mt-1">Sign up for available shifts to see them here once approved.</p>
+              <p className="text-zinc-600 text-sm mt-1.5">Sign up for available shifts to see them here once approved.</p>
             </div>
           ) : (
             mySchedule.map(signup => (
               <ScheduleCard key={signup.id} signup={signup} onRefresh={fetchJobs} />
             ))
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {myAssignments.length === 0 ? (
+            <div className="text-center py-16">
+              <ListTodo size={40} className="text-zinc-700 mx-auto mb-3" />
+              <p className="text-zinc-400 font-medium">No active tasks assigned to you</p>
+              <p className="text-zinc-650 text-sm mt-1">Assignments set by your team coordinator will show up here.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {myAssignments.map((task: any) => (
+                <div key={task.id} className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-between hover:border-zinc-700 transition-all">
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="checkbox" 
+                      checked={task.status === 'COMPLETED'} 
+                      onChange={() => handleToggleTask(task.id, task.status)}
+                      className="accent-brand border-zinc-700 rounded h-4 w-4"
+                    />
+                    <div>
+                      <p className={`font-semibold text-sm ${task.status === 'COMPLETED' ? 'line-through text-zinc-500' : 'text-white'}`}>{task.title}</p>
+                      <p className="text-xs text-zinc-500 font-medium mt-0.5">Shift: {task.jobTitle}</p>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${task.priority === 'URGENT' ? 'bg-red-500/10 text-red-400' : 'bg-brand/10 text-brand'}`}>
+                    {task.priority}
+                  </span>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}
