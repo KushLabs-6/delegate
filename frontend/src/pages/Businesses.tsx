@@ -47,7 +47,7 @@ const Businesses: React.FC = () => {
   // --- Team Management State ---
   const [jobs, setJobs] = useState<any[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(false);
-  const [activeTab, setActiveTab] = useState<'members' | 'jobs' | 'tasks'>('members');
+
   const [showPostJobModal, setShowPostJobModal] = useState(false);
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
 
@@ -593,27 +593,6 @@ const Businesses: React.FC = () => {
 
             {/* Header Actions */}
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
-              {/* Panel Tabs */}
-              <div className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-xl w-full sm:w-auto">
-                <button
-                  onClick={() => setActiveTab('members')}
-                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex-1 ${activeTab === 'members' ? 'bg-brand text-zinc-900' : 'text-zinc-400 hover:text-zinc-200'}`}
-                >
-                  Members ({currentBusiness.members?.length || 0})
-                </button>
-                <button
-                  onClick={() => setActiveTab('jobs')}
-                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex-1 ${activeTab === 'jobs' ? 'bg-brand text-zinc-900' : 'text-zinc-400 hover:text-zinc-200'}`}
-                >
-                  Jobs / Shifts ({jobs.length})
-                </button>
-                <button
-                  onClick={() => setActiveTab('tasks')}
-                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex-1 ${activeTab === 'tasks' ? 'bg-brand text-zinc-900' : 'text-zinc-400 hover:text-zinc-200'}`}
-                >
-                  Tasks ({allAssignments.length})
-                </button>
-              </div>
 
               {/* Delete Button for Owner */}
               {currentBusiness.userRole === 'OWNER' && (
@@ -629,8 +608,8 @@ const Businesses: React.FC = () => {
             </div>
           </div>
 
-          {/* TAB 1: MEMBERS */}
-          {activeTab === 'members' && (
+          {/* SECTION 1: MEMBERS */}
+          <div className="pt-4 border-t border-zinc-800/50">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h4 className="text-sm font-bold text-white uppercase tracking-wider">Team Roster</h4>
@@ -687,10 +666,10 @@ const Businesses: React.FC = () => {
                 })}
               </div>
             </div>
-          )}
+          </div>
 
-          {/* TAB 2: JOBS / SHIFTS */}
-          {activeTab === 'jobs' && (
+          {/* SECTION 2: JOBS / SHIFTS */}
+          <div className="pt-6 border-t border-zinc-800/50">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h4 className="text-sm font-bold text-white uppercase tracking-wider">Jobs & Schedules</h4>
@@ -775,10 +754,10 @@ const Businesses: React.FC = () => {
                 </div>
               )}
             </div>
-          )}
+          </div>
 
-          {/* TAB 3: TASKS / ASSIGNMENTS */}
-          {activeTab === 'tasks' && (
+          {/* SECTION 3: TASKS / ASSIGNMENTS */}
+          <div className="pt-6 border-t border-zinc-800/50">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h4 className="text-sm font-bold text-white uppercase tracking-wider">Tasks & Assignments</h4>
@@ -854,10 +833,10 @@ const Businesses: React.FC = () => {
                 </div>
               )}
             </div>
-          )}
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* --- POST JOB MODAL --- */}
       {showPostJobModal && (
