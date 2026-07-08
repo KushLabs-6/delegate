@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext.js';
 import api from '../services/api.js';
 import { QRCodeSVG } from 'qrcode.react';
 import { Scanner } from '@yudiel/react-qr-scanner';
-import { useSearchParams } from 'react-router-dom';
 import { 
   Building2, PlusCircle, CheckCircle, Shield, Link, 
   Check, Trash2, Calendar, 
@@ -30,8 +29,6 @@ const Businesses: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [joinError, setJoinError] = useState('');
   const [joinSuccess, setJoinSuccess] = useState('');
-
-  const [searchParams, setSearchParams] = useSearchParams();
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteIdentifier, setInviteIdentifier] = useState('');
@@ -128,33 +125,6 @@ const Businesses: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    const joinCode = searchParams.get('join');
-    if (joinCode && !loading) {
-      setInviteCode(joinCode);
-      setJoinMode('type');
-      
-      const autoJoin = async () => {
-        setLoading(true);
-        setJoinError('');
-        try {
-          const res = await api.post('/businesses/join', { codeOrId: joinCode });
-          setJoinSuccess(`Successfully joined team! ${res.data.business.name}`);
-          setInviteCode('');
-          searchParams.delete('join');
-          setSearchParams(searchParams);
-          await fetchBusinesses();
-        } catch (err: any) {
-          setJoinError(err.response?.data?.error || 'Invalid or expired invite code');
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      autoJoin();
-    }
-  }, [searchParams, fetchBusinesses]);
-
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteCode) return;
@@ -176,16 +146,7 @@ const Businesses: React.FC = () => {
 
   const handleScan = async (result: any) => {
     if (result && result.length > 0 && result[0].rawValue) {
-      let code = result[0].rawValue;
-      try {
-        const url = new URL(code);
-        const joinParam = url.searchParams.get('join');
-        if (joinParam) {
-          code = joinParam;
-        }
-      } catch (e) {
-        // Not a URL, use as is
-      }
+      const code = result[0].rawValue;
       
       setInviteCode(code);
       setJoinMode('type');
@@ -470,7 +431,6 @@ const Businesses: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {businesses.map((biz) => {
                 const isActive = false; // currentBusiness is null in list view
-                const canManage = ['OWNER', 'ADMIN', 'MANAGER'].includes(biz.userRole);
                 
                 return (
                   <div
@@ -506,42 +466,6 @@ const Businesses: React.FC = () => {
                       </h4>
                       <p className="text-zinc-500 text-xs line-clamp-2 relative z-10">{biz.description || 'No description provided.'}</p>
                     </div>
-
-                    {/* Invite Code Section (Only for Managers+) */}
-                    {canManage && biz.inviteCode && (
-                      <div className="border-t border-zinc-800/50 bg-dark-900/50 p-4 relative z-10">
-                        <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">Invite Code</p>
-                            <p className="font-mono text-white text-sm tracking-widest">{biz.inviteCode.toUpperCase()}</p>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigator.clipboard.writeText((biz.inviteCode || '').toUpperCase());
-                                setCopiedCode(biz.id);
-                                setTimeout(() => setCopiedCode(''), 2000);
-                              }}
-                              className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
-                              title="Copy Code"
-                            >
-                              {copiedCode === biz.id ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowQRBiz(biz);
-                              }}
-                              className="p-2 rounded-lg bg-brand/10 hover:bg-brand/20 text-brand border border-brand/20 transition-colors"
-                              title="Show QR Code"
-                            >
-                              <QrCode className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 );
               })}
@@ -654,16 +578,11 @@ const Businesses: React.FC = () => {
 
             <div className="bg-white p-6 rounded-xl mx-auto w-max mb-6">
               <QRCodeSVG 
-                value={`${window.location.origin}/businesses?join=${showQRBiz.inviteCode || ''}`}
+                value={showQRBiz.inviteCode || ''}
                 size={200}
                 level="M"
                 includeMargin={false}
               />
-            </div>
-
-            <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-4 text-center">
-              <p className="text-xs text-zinc-500 uppercase font-semibold tracking-wider mb-2">Or Use Invite Code</p>
-              <p className="text-2xl font-mono font-bold text-white tracking-[0.2em]">{(showQRBiz.inviteCode || '').toUpperCase()}</p>
             </div>
           </div>
         </div>
@@ -692,6 +611,25 @@ const Businesses: React.FC = () => {
 
               {/* Header Actions */}
               <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
+                {currentBusiness.inviteCode && (
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-zinc-800/50 rounded-xl border border-zinc-700/50">
+                    <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Invite Code:</span>
+                    <span className="font-mono text-white text-xs tracking-widest">{currentBusiness.inviteCode.toUpperCase()}</span>
+                    <button
+                      onClick={() => {
+                        if (currentBusiness?.inviteCode) {
+                          navigator.clipboard.writeText(currentBusiness.inviteCode.toUpperCase());
+                          setCopiedCode(currentBusiness.id);
+                          setTimeout(() => setCopiedCode(''), 2000);
+                        }
+                      }}
+                      className="ml-1 p-1 hover:text-white text-zinc-400 transition-colors"
+                      title="Copy Code"
+                    >
+                      {copiedCode === currentBusiness.id ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                )}
                 <button
                   onClick={() => setShowQRBiz(currentBusiness)}
                   className="flex items-center justify-center gap-2 px-4 py-2 bg-brand/10 hover:bg-brand/20 text-brand border border-brand/20 rounded-xl transition-colors text-xs font-bold w-full sm:w-auto"
