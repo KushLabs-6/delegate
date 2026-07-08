@@ -13,6 +13,7 @@
     "@capacitor/android": "^8.4.1",
     "@capacitor/cli": "^8.4.1",
     "@capacitor/core": "^8.4.1",
+    "@capacitor/local-notifications": "^8.2.0",
     "@yudiel/react-qr-scanner": "^2.6.0",
     "axios": "^1.6.8",
     "lucide-react": "^0.368.0",

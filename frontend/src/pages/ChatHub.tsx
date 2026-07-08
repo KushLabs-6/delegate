@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext.js';
 import api from '../services/api.js';
 import { 
   MessageSquare, User, Send, Paperclip, 
-  PlusCircle, Users, ArrowLeft, Loader2
+  PlusCircle, Users, ArrowLeft, Loader2, Trash2
 } from 'lucide-react';
 
 interface Group {
@@ -204,6 +204,17 @@ const ChatHub: React.FC = () => {
     }
   };
 
+  const handleClearChat = async () => {
+    if (!activeGroupId) return;
+    if (!confirm('Are you sure you want to permanently clear all messages in this group channel?')) return;
+    try {
+      await api.delete(`/groups/${activeGroupId}/messages/clear`);
+      setMessages([]);
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to clear chat');
+    }
+  };
+
   const handleReactToMessage = async (messageId: string, emoji: string) => {
     try {
       const res = await api.post(`/messages/react/${messageId}`, { emoji });
@@ -322,6 +333,17 @@ const ChatHub: React.FC = () => {
                   </p>
                 </div>
               </div>
+
+              {activeType === 'group' && currentBusiness && ['OWNER', 'ADMIN', 'MANAGER'].includes(currentBusiness.userRole) && (
+                <button
+                  onClick={handleClearChat}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 text-xs font-bold transition-all"
+                  title="Clear all messages in this group channel"
+                >
+                  <Trash2 size={13} />
+                  Clear Chat
+                </button>
+              )}
             </div>
 
             {/* Message Feed Scroller */}

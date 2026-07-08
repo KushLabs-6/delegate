@@ -6,7 +6,7 @@ import { Scanner } from '@yudiel/react-qr-scanner';
 import { 
   Building2, PlusCircle, CheckCircle, Shield, Link, 
   Check, Trash2, Calendar, 
-  ListTodo, Clock, MapPin, Users, Loader2, Camera, Keyboard, QrCode, Copy, X, ArrowLeft
+  ListTodo, Clock, MapPin, Users, Loader2, Camera, Keyboard, QrCode, Copy, X, ArrowLeft, Edit
 } from 'lucide-react';
 import ChatHub from './ChatHub';
 import Meetings from './Meetings';
@@ -249,7 +249,39 @@ const Businesses: React.FC = () => {
 
 
 
-  // Extract all assignments (tasks) from the jobs list
+  const [editingTask, setEditingTask] = useState<any | null>(null);
+
+  const handleDeleteAssignment = async (assignmentId: string) => {
+    if (!confirm('Are you sure you want to delete this task assignment?')) return;
+    try {
+      await api.delete(`/assignments/${assignmentId}`);
+      fetchTeamData();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to delete assignment');
+    }
+  };
+
+  const handleUpdateAssignmentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTask || !editingTask.title) return;
+    setLoading(true);
+    try {
+      await api.put(`/assignments/${editingTask.id}`, {
+        title: editingTask.title,
+        description: editingTask.description,
+        userId: editingTask.userId,
+        dueDate: editingTask.dueDate ? editingTask.dueDate.split('T')[0] : null,
+        priority: editingTask.priority,
+        status: editingTask.status,
+      });
+      setEditingTask(null);
+      fetchTeamData();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to update task');
+    } finally {
+      setLoading(false);
+    }
+  };
   const allAssignments = jobs.flatMap(j => 
     (j.assignments || []).map((a: any) => ({ ...a, jobTitle: j.title }))
   );
@@ -829,6 +861,33 @@ const Businesses: React.FC = () => {
                         }`}>
                           {task.status}
                         </span>
+
+                        {isSupervisor && (
+                          <div className="flex gap-2 mt-1">
+                            <button
+                              onClick={() => setEditingTask({
+                                id: task.id,
+                                title: task.title,
+                                description: task.description || '',
+                                userId: task.userId,
+                                dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
+                                priority: task.priority,
+                                status: task.status,
+                              })}
+                              className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                              title="Edit Task"
+                            >
+                              <Edit size={12} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAssignment(task.id)}
+                              className="p-1 rounded hover:bg-red-950/45 text-zinc-450 hover:text-red-400 transition-colors"
+                              title="Delete Task"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1075,6 +1134,115 @@ const Businesses: React.FC = () => {
                   className="flex-1 py-2 bg-brand text-dark-900 text-xs font-bold rounded-lg hover:bg-brand-glow"
                 >
                   {loading ? 'Assigning...' : 'Assign Task'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- EDIT TASK / ASSIGNMENT MODAL --- */}
+      {editingTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={() => setEditingTask(null)}>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <ListTodo className="text-brand h-5 w-5" />
+                Edit Team Task / Assignment
+              </h3>
+              <button onClick={() => setEditingTask(null)} className="text-zinc-500 hover:text-white">✕</button>
+            </div>
+
+            <form onSubmit={handleUpdateAssignmentSubmit} className="space-y-3.5">
+              <div>
+                <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Task Title *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Set up banner stands"
+                  value={editingTask.title}
+                  onChange={e => setEditingTask({ ...editingTask, title: e.target.value })}
+                  className="w-full bg-dark-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Description</label>
+                <textarea
+                  placeholder="e.g. Place stands at the East entrance..."
+                  value={editingTask.description}
+                  onChange={e => setEditingTask({ ...editingTask, description: e.target.value })}
+                  className="w-full bg-dark-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand resize-none"
+                  rows={2}
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Assign to Member *</label>
+                <select
+                  required
+                  value={editingTask.userId}
+                  onChange={e => setEditingTask({ ...editingTask, userId: e.target.value })}
+                  className="w-full bg-dark-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-brand"
+                >
+                  <option value="">-- Select Member --</option>
+                  {currentBusiness?.members?.map(m => (
+                    <option key={m.userId} value={m.userId}>{m.user.fullName} (@{m.user.username})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Due Date</label>
+                  <input
+                    type="date"
+                    value={editingTask.dueDate}
+                    onChange={e => setEditingTask({ ...editingTask, dueDate: e.target.value })}
+                    className="w-full bg-dark-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-brand"
+                  />
+                </div>
+                <div>
+                  <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Priority</label>
+                  <select
+                    value={editingTask.priority}
+                    onChange={e => setEditingTask({ ...editingTask, priority: e.target.value })}
+                    className="w-full bg-dark-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-brand"
+                  >
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="URGENT">Urgent</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Status</label>
+                <select
+                  value={editingTask.status}
+                  onChange={e => setEditingTask({ ...editingTask, status: e.target.value })}
+                  className="w-full bg-dark-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 focus:outline-none focus:border-brand"
+                >
+                  <option value="PENDING">Pending</option>
+                  <option value="COMPLETED">Completed</option>
+                </select>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingTask(null)}
+                  className="flex-1 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 py-2 bg-brand text-dark-900 text-xs font-bold rounded-lg hover:bg-brand-glow"
+                >
+                  {loading ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>

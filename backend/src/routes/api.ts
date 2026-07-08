@@ -56,6 +56,7 @@ import {
   getMessages,
   togglePinMessage,
   reactToMessage,
+  clearGroupMessages,
   getNotifications,
   markNotificationRead,
   markAllNotificationsRead
@@ -173,6 +174,7 @@ router.get('/assignments/:assignmentId/comments', authenticateToken, getComments
 // ==================== MESSAGING & CHATS ====================
 router.post('/messages', authenticateToken, sendMessage);
 router.get('/messages', authenticateToken, getMessages);
+router.delete('/groups/:groupId/messages/clear', authenticateToken, clearGroupMessages);
 router.put('/messages/pin/:messageId', authenticateToken, togglePinMessage);
 router.post('/messages/react/:messageId', authenticateToken, reactToMessage);
 

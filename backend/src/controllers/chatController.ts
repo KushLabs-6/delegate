@@ -213,3 +213,35 @@ export const markAllNotificationsRead = async (req: AuthenticatedRequest, res: R
     res.status(500).json({ error: error.message });
   }
 };
+
+// Clear Group Chat Messages (for Owner/Admin/Manager)
+export const clearGroupMessages = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    const { groupId } = req.params;
+
+    const group = await prisma.teamGroup.findUnique({
+      where: { id: groupId }
+    });
+
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    const membership = await prisma.businessMember.findFirst({
+      where: { userId: req.user.id, businessId: group.businessId }
+    });
+
+    if (!membership || !['OWNER', 'ADMIN', 'MANAGER'].includes(membership.role)) {
+      return res.status(403).json({ error: 'Only team managers or owners can clear group chats.' });
+    }
+
+    await prisma.message.deleteMany({
+      where: { groupId }
+    });
+
+    res.json({ message: 'Group chat cleared successfully' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};

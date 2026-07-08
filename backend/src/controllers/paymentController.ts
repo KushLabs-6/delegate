@@ -30,8 +30,8 @@ async function getPayPalToken() {
 
 export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const { planId } = req.body; // e.g., 'monthly'
-        const amount = '20.00'; // Hardcoded price for now
+        const { planId, amount: bodyAmount } = req.body; // e.g., 'monthly'
+        const amount = bodyAmount ? parseFloat(bodyAmount).toFixed(2) : '20.00';
 
         console.log(`Creating PayPal order - Plan: ${planId}, Amount: $${amount}`);
 

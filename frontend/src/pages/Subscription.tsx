@@ -13,6 +13,20 @@ const Subscription: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   
+  const [paymentType, setPaymentType] = useState<'premium' | 'donation'>('premium');
+  const [donationAmount, setDonationAmount] = useState('10.00');
+
+  const paymentTypeRef = useRef(paymentType);
+  const donationAmountRef = useRef(donationAmount);
+
+  useEffect(() => {
+    paymentTypeRef.current = paymentType;
+  }, [paymentType]);
+
+  useEffect(() => {
+    donationAmountRef.current = donationAmount;
+  }, [donationAmount]);
+
   const paypalButtonRef = useRef<boolean | null>(null);
   const cardFieldsRef = useRef<any>(null);
 
@@ -48,7 +62,11 @@ const Subscription: React.FC = () => {
           createOrder: async () => {
             setErrorMsg('');
             try {
-              const res = await api.post('/paypal/create-order', { planId: 'monthly' });
+              const amount = paymentTypeRef.current === 'premium' ? '20.00' : donationAmountRef.current;
+              const res = await api.post('/paypal/create-order', { 
+                planId: paymentTypeRef.current === 'premium' ? 'monthly' : 'donation',
+                amount
+              });
               return res.data.id;
             } catch (err: any) {
               setErrorMsg('Failed to create order');
@@ -87,10 +105,21 @@ const Subscription: React.FC = () => {
       if (cardFieldsRef.current) return;
       
       const cardFields = (window as any).paypal.CardFields({
+        style: {
+          input: {
+            'color': '#ffffff',
+            'font-size': '15px',
+            'font-family': 'sans-serif',
+          }
+        },
         createOrder: async () => {
           setErrorMsg('');
           try {
-            const res = await api.post('/paypal/create-order', { planId: 'monthly' });
+            const amount = paymentTypeRef.current === 'premium' ? '20.00' : donationAmountRef.current;
+            const res = await api.post('/paypal/create-order', { 
+              planId: paymentTypeRef.current === 'premium' ? 'monthly' : 'donation',
+              amount
+            });
             return res.data.id;
           } catch (err: any) {
             setErrorMsg('Failed to create order');
@@ -173,23 +202,67 @@ const Subscription: React.FC = () => {
       
       {/* Order Summary */}
       <div className="bg-zinc-900 border-t-4 border-brand p-8 rounded-2xl w-full max-w-sm shrink-0">
-        <h3 className="text-xs text-zinc-500 uppercase tracking-widest mb-4 font-bold">Order Summary</h3>
-        <h2 className="text-2xl font-black text-white mb-1">Delegate <span className="text-brand">Premium</span></h2>
-        <p className="text-zinc-400 text-sm mb-6">Monthly — Billed every 30 days</p>
+        <h3 className="text-xs text-zinc-500 uppercase tracking-widest mb-4 font-bold">Select Option</h3>
         
-        <div className="space-y-3 mb-8">
-          {['Unlimited Teams', 'Advanced Analytics', 'Priority Support', 'Custom Roles'].map((feature, i) => (
-            <div key={i} className="flex items-center gap-3 text-sm text-zinc-300">
-              <span className="text-brand font-black">✓</span> {feature}
-            </div>
-          ))}
+        <div className="flex bg-zinc-850 p-1 rounded-xl mb-6 border border-zinc-800">
+          <button 
+            onClick={() => setPaymentType('premium')}
+            className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-colors ${paymentType === 'premium' ? 'bg-brand text-zinc-900' : 'text-zinc-400 hover:text-zinc-200'}`}
+          >
+            Premium
+          </button>
+          <button 
+            onClick={() => setPaymentType('donation')}
+            className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-colors ${paymentType === 'donation' ? 'bg-brand text-zinc-900' : 'text-zinc-400 hover:text-zinc-200'}`}
+          >
+            Support
+          </button>
         </div>
+
+        {paymentType === 'premium' ? (
+          <>
+            <h2 className="text-2xl font-black text-white mb-1">Delegate <span className="text-brand">Premium</span></h2>
+            <p className="text-zinc-400 text-sm mb-6">Monthly — Billed every 30 days</p>
+            
+            <div className="space-y-3 mb-8">
+              {['Unlimited Teams', 'Advanced Analytics', 'Priority Support', 'Custom Roles'].map((feature, i) => (
+                <div key={i} className="flex items-center gap-3 text-sm text-zinc-300">
+                  <span className="text-brand font-black">✓</span> {feature}
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="mb-6">
+            <h2 className="text-2xl font-black text-white mb-1">Support <span className="text-brand">BJA</span></h2>
+            <p className="text-zinc-400 text-sm mb-6">Help keep BJA active with a donation of any size.</p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Contribution Amount</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">$</span>
+                  <input 
+                    type="number"
+                    min="1.00"
+                    step="0.01"
+                    placeholder="10.00"
+                    value={donationAmount}
+                    onChange={(e) => setDonationAmount(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-3 pl-8 pr-4 text-white font-bold focus:outline-none focus:border-brand"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="border-t border-zinc-800 pt-5 flex justify-between items-end">
           <span className="text-xl font-black text-white">Total</span>
           <div className="text-right">
-            <span className="text-2xl font-black text-brand">$20.00</span>
-            <div className="text-xs text-zinc-500">USD / month</div>
+            <span className="text-2xl font-black text-brand">
+              ${paymentType === 'premium' ? '20.00' : parseFloat(donationAmount || '0').toFixed(2)}
+            </span>
+            <div className="text-xs text-zinc-500">USD</div>
           </div>
         </div>
       </div>
@@ -223,17 +296,17 @@ const Subscription: React.FC = () => {
           <div className="space-y-5">
             <div>
               <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Card Number</label>
-              <div id="card-number" className="paypal-field-container h-12 border border-zinc-700 bg-zinc-100 rounded-xl px-4 flex items-center"></div>
+              <div id="card-number" className="paypal-field-container h-12 border border-zinc-800 bg-zinc-950 rounded-xl px-4 flex items-center"></div>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Expiry</label>
-                <div id="card-expiry" className="paypal-field-container h-12 border border-zinc-700 bg-zinc-100 rounded-xl px-4 flex items-center"></div>
+                <div id="card-expiry" className="paypal-field-container h-12 border border-zinc-800 bg-zinc-950 rounded-xl px-4 flex items-center"></div>
               </div>
               <div>
                 <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">CVV</label>
-                <div id="card-cvv" className="paypal-field-container h-12 border border-zinc-700 bg-zinc-100 rounded-xl px-4 flex items-center"></div>
+                <div id="card-cvv" className="paypal-field-container h-12 border border-zinc-800 bg-zinc-950 rounded-xl px-4 flex items-center"></div>
               </div>
             </div>
             
@@ -253,7 +326,7 @@ const Subscription: React.FC = () => {
               disabled={processing || !sdkReady}
               className="w-full py-4 mt-4 bg-brand text-zinc-900 font-black text-lg rounded-xl hover:bg-yellow-400 transition-colors disabled:opacity-50"
             >
-              {processing ? 'Processing...' : '💳 Pay $20.00 Securely'}
+              {processing ? 'Processing...' : `💳 Pay $${paymentType === 'premium' ? '20.00' : parseFloat(donationAmount || '0').toFixed(2)} Securely`}
             </button>
             <p className="text-center text-xs text-zinc-500 mt-2">No PayPal account needed • Card data never stored on our servers</p>
           </div>

@@ -20,6 +20,7 @@ import CalendarView from './pages/CalendarView';
 import ChatHub from './pages/ChatHub';
 import Profile from './pages/Profile';
 import Subscription from './pages/Subscription';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 // Icons
 import {
@@ -181,39 +182,74 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     try {
       const res = await api.get('/notifications');
       const newCount = res.data.filter((n: any) => !n.isRead).length;
-      setUnreadCount(prev => {
-        if (newCount > prev && prev !== 0) {
-          try {
-            // Vibrate on mobile devices
-            if (navigator.vibrate) {
-              navigator.vibrate([200, 100, 200]);
-            }
-            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-            if (AudioContext) {
-              const ctx = new AudioContext();
-              const osc = ctx.createOscillator();
-              const gainNode = ctx.createGain();
-              osc.connect(gainNode);
-              gainNode.connect(ctx.destination);
-              osc.type = 'sine';
-              osc.frequency.setValueAtTime(880, ctx.currentTime);
-              osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1);
-              gainNode.gain.setValueAtTime(0, ctx.currentTime);
-              gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
-              gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-              osc.start(ctx.currentTime);
-              osc.stop(ctx.currentTime + 0.5);
-            }
-          } catch (e) {}
+      
+      if (newCount > unreadCount && unreadCount !== 0) {
+        // Trigger local vibration/sound
+        try {
+          if (navigator.vibrate) {
+            navigator.vibrate([200, 100, 200]);
+          }
+          
+          // Native Capacitor Notification
+          await LocalNotifications.requestPermissions();
+          const latest = res.data.filter((n: any) => !n.isRead)[0];
+          if (latest) {
+            await LocalNotifications.schedule({
+              notifications: [
+                {
+                  title: latest.title,
+                  body: latest.description,
+                  id: Math.floor(Math.random() * 100000),
+                  schedule: { at: new Date(Date.now() + 100) },
+                  actionTypeId: 'OPEN_APP'
+                }
+              ]
+            });
+          }
+
+          // HTML5 Web Audio Synth chime
+          const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioContext) {
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0, ctx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.5);
+          }
+        } catch (e) {
+          console.error("Notification sound error", e);
         }
-        return newCount;
-      });
+      }
+      setUnreadCount(newCount);
     } catch { /* silent */ }
+  }, [unreadCount]);
+
+  useEffect(() => {
+    // Resume audio context on interaction to allow browser sound autoplay
+    const resumeAudio = () => {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContext) {
+        const tempCtx = new AudioContext();
+        if (tempCtx.state === 'suspended') {
+          tempCtx.resume();
+        }
+      }
+    };
+    document.addEventListener('click', resumeAudio, { once: true });
+    return () => document.removeEventListener('click', resumeAudio);
   }, []);
 
   useEffect(() => {
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000);
+    const interval = setInterval(fetchUnreadCount, 15000); // Poll more frequently (15s) for better real-time updates
     return () => clearInterval(interval);
   }, [fetchUnreadCount]);
 
@@ -227,7 +263,7 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="flex flex-col min-h-screen bg-zinc-950 text-white">
       {/* ── Top Header ── */}
-      <header className="sticky top-0 z-40 bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 px-4 pt-[calc(12px+env(safe-area-inset-top))] pb-3 flex items-center justify-between">
         {/* Left: Logo + Business Picker */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
