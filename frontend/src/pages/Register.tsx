@@ -82,10 +82,11 @@ const Register: React.FC = () => {
                   required
                   placeholder="johndoe"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))}
                   className="w-full bg-dark-900 border border-zinc-800 rounded-inner py-3 pl-10 pr-4 text-white placeholder-zinc-600 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all"
                 />
               </div>
+              <p className="text-[10px] text-zinc-600 mt-1">Lowercase letters and numbers only, no spaces.</p>
             </div>
 
             <div>

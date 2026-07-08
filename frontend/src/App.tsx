@@ -228,7 +228,7 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         {/* Left: Logo + Business Picker */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <img src="/delegate-logo.png" alt="Delegate" className="w-8 h-8 rounded-lg object-cover" />
+            <img src="/delegate-logo.png" alt="Delegate" className="w-8 h-8 object-contain mix-blend-screen brightness-110" />
             <span className="font-bold text-white hidden sm:block">Delegate</span>
           </div>
 

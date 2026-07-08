@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Delegate</string>
+    <string name="title_activity_main">Delegate</string>
+    <string name="package_name">com.kushlabs.delegate</string>
+    <string name="custom_url_scheme">com.kushlabs.delegate</string>
+</resources>

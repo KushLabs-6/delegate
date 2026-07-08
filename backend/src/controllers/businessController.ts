@@ -14,6 +14,16 @@ export const createBusiness = async (req: AuthenticatedRequest, res: Response) =
       return res.status(400).json({ error: 'Business name is required' });
     }
 
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (user?.subscriptionPlan === 'FREE') {
+      const existingTeams = await prisma.business.count({
+        where: { ownerId: req.user.id },
+      });
+      if (existingTeams >= 1) {
+        return res.status(403).json({ error: 'Free tier is limited to 1 team. Please upgrade to Premium to create more teams.' });
+      }
+    }
+
     const business = await prisma.business.create({
       data: {
         name,

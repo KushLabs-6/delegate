@@ -16,15 +16,21 @@ export const register = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(400).json({ error: 'All required fields must be provided' });
     }
 
+    const cleanUsername = username.toLowerCase().replace(/\s+/g, '');
+    const cleanEmail = email.toLowerCase();
+
     // Check if email or username already exists
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [{ email }, { username }],
+        OR: [{ email: cleanEmail }, { username: cleanUsername }],
       },
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: 'Username or Email is already registered' });
+      if (existingUser.username === cleanUsername) {
+        return res.status(400).json({ error: 'Username is already taken' });
+      }
+      return res.status(400).json({ error: 'Email is already registered' });
     }
 
     // Hash password
@@ -33,9 +39,9 @@ export const register = async (req: AuthenticatedRequest, res: Response) => {
     // Create user
     const user = await prisma.user.create({
       data: {
-        username,
+        username: cleanUsername,
         fullName,
-        email,
+        email: cleanEmail,
         password: hashedPassword,
         phone,
         // Auto-verify in dev/test, can be mocked
