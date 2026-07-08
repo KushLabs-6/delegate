@@ -612,7 +612,7 @@ const Businesses: React.FC = () => {
               {/* Header Actions */}
               <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
                 {currentBusiness.inviteCode && (
-                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-zinc-800/50 rounded-xl border border-zinc-700/50">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/50 rounded-xl border border-zinc-700/50 w-full sm:w-auto justify-center sm:justify-start">
                     <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Invite Code:</span>
                     <span className="font-mono text-white text-xs tracking-widest">{currentBusiness.inviteCode.toUpperCase()}</span>
                     <button
